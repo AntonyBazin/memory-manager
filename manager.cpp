@@ -17,6 +17,6 @@ namespace manager{
         used_units_count = 0;
         programs = nullptr;
         programs_amount = 0;
-        memory = new int[max_size];
+        memory = new char[max_size];
     }
 }
