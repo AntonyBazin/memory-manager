@@ -25,19 +25,11 @@ namespace manager{
     };
 
 
-    class Table{
-    private:
-        static const int max_size = 300;
-        unsigned int current_size;
-        unsigned int used_units_count;
-        Program* programs;
-        unsigned int programs_amount;
-        char *memory;
-        Table();
-    public:
-        Table& cmd_Table();
-
-        ~Table() { delete [] memory; };
+    class Entity{
+    protected:
+        std::string name;
+        Unit* position;
+        virtual std::ostream& show(std::ostream&) const = 0;
     };
 
 
@@ -48,18 +40,38 @@ namespace manager{
         std::string file_address;
         unsigned int memory_quota;
     public:
-
+        Program();
+        Program(unsigned int t_mem = 50, std::string t_addr = "default");
+        void request_memory();
+        void free_memory();
+        std::ostream& show_all(std::ostream&);
+        std::ostream& show_divsegs(std::ostream&);
+        unsigned int memory_used();
+        ~Program() { delete [] entities; };
     };
 
 
-    class Entity{
-    protected:
-        std::string name;
-        Unit position;
-        virtual std::ostream& show(std::ostream&) const = 0;
+    class Table{
+    private:
+        static const int max_size = 300;
+        unsigned int current_size;
+        unsigned int used_units_count;
+        char *memory;
+        unsigned int units_count;
+        Unit* units;
+        unsigned int programs_amount;
+        Program* programs;
+        Table();
     public:
-        Entity();
-        Entity(Unit);
+        Table& cmd_Table();
+        Unit allocate_memory(unsigned int t_size);
+        std::ostream& show_all(std::ostream&);
+        std::ostream& print_prog_memory(std::ostream, Program* t_program);
+        std::ostream& show_errors(std::ostream&);
+        std::ostream& show_incorrect_links(std::ostream&);
+        void defragmentation();
+        Entity* read_memory(Unit t_unit);
+        ~Table() { delete [] memory; delete [] units; delete [] programs; };
     };
 
 
@@ -116,6 +128,7 @@ namespace manager{
         int& operator [](unsigned int t_index);
         int operator [](unsigned int t_index) const;
         void free_program(Program* program);
+        void cleanup();  // delete all program links
     };
 
 }
