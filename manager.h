@@ -111,7 +111,7 @@ namespace manager{
         Value(int val);
         int get_instance();
         int set_instance(int t_new_inst);
-        Link* create_link();
+        Entity* create_link();
     };
 
     class DivSeg : protected Entity{
@@ -132,6 +132,5 @@ namespace manager{
     };
 
 }
-
 
 #endif //MEMORY_MANAGER_MANAGER_H
