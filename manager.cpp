@@ -11,11 +11,4 @@ namespace manager{
         return instance;
     }
 
-    Table::Table() {
-        current_size = 0;
-        used_units_count = 0;
-        programs = nullptr;
-        programs_amount = 0;
-        memory = new char[max_size];
-    }
 }
