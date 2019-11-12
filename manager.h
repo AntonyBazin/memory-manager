@@ -6,6 +6,7 @@
 #define MEMORY_MANAGER_MANAGER_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <typeinfo>
 
@@ -24,7 +25,12 @@ namespace manager{
     struct Unit{
         unsigned int starter_address;
         unsigned int size;
-        unsigned int ptr_count;
+        bool active;
+
+        Unit(unsigned int t_strt, unsigned int t_size, bool t_actv) :
+        starter_address(t_strt), size(t_size), active(t_actv){};
+
+        Unit() : starter_address(0), size(0), active(false) {};
     };
 
 
@@ -34,8 +40,10 @@ namespace manager{
         Unit position;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
-        explicit Entity(Unit un, std::string nm  = "default_name") { position = un;
-                                                                     name = std::move(nm); };
+        explicit Entity(Unit un, std::string nm  = "default_name") :
+        position(un),
+        name(std::move(nm)) {};
+
         virtual ~Entity() = default;
     };
 
@@ -47,8 +55,17 @@ namespace manager{
         std::string file_address;
         const unsigned int memory_quota;
     public:
-        Program();
-        Program(unsigned int t_mem = 10, std::string t_addr = "default");
+        Program() :
+        ent_amount(0),
+        entities(nullptr),
+        file_address("default"),
+        memory_quota(50) {};
+
+        explicit Program(unsigned int t_mem = 50, std::string t_addr = "default") :
+        memory_quota(t_mem),
+        file_address(std::move(t_addr)),
+        entities(nullptr),
+        ent_amount(0) {};
 
         void request_memory(unsigned int t_amout, Entity* ptr);
 
