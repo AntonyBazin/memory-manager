@@ -50,22 +50,19 @@ namespace manager{
 
     class Program{
     private:
-        unsigned int ent_amount;
-        Entity* entities;
+        std::vector<Entity*> entities;
         std::string file_address;
         const unsigned int memory_quota;
     public:
         Program() :
-        ent_amount(0),
-        entities(nullptr),
+        entities({}),
         file_address("default"),
         memory_quota(50) {};
 
         explicit Program(unsigned int t_mem = 50, std::string t_addr = "default") :
         memory_quota(t_mem),
         file_address(std::move(t_addr)),
-        entities(nullptr),
-        ent_amount(0) {};
+        entities({}) {};
 
         void request_memory(unsigned int t_amout, Entity* ptr);
 
@@ -78,7 +75,7 @@ namespace manager{
         std::ostream& show_all(std::ostream&);
         std::ostream& show_divsegs(std::ostream&);
 
-        ~Program() { delete [] entities; };
+        ~Program();
     };
 
 
@@ -86,12 +83,10 @@ namespace manager{
     private:
         static const int max_size = 300;
         unsigned int current_size;
-        unsigned char *memory;
-        unsigned int free_blocks_count;
-        Unit* free_blocks;
-        Table();
+        static unsigned char *memory;
+        std::vector<Unit> free_blocks;
     public:
-        static Table& cmd_Table();   // command table
+        Table();
 
         void defragmentation();   // obvious
 
@@ -99,7 +94,7 @@ namespace manager{
 
         Entity* allocate_memory(unsigned int t_size, std::type_info& info);
 
-        ~Table() { delete [] memory; delete [] free_blocks; };
+        ~Table() { delete [] memory; };
     };
 
 
