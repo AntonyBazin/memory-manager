@@ -23,6 +23,9 @@ namespace manager{
     class DivSeg;
 
 
+    enum Entity_ID{ Value_ID = 0, Array_ID = 1, DivSeg_ID = 2 };
+
+
     struct Unit{
         unsigned int starter_address;
         unsigned int size;
@@ -46,6 +49,8 @@ namespace manager{
         name(std::move(nm)) {};
 
         virtual ~Entity() = default;
+
+        static Entity* create_Entity(Entity_ID id) noexcept(false);
     };
 
 
@@ -93,7 +98,7 @@ namespace manager{
 
         void mark_free(unsigned int t_strt, unsigned int t_size) noexcept(false);   // for programs to return memory to heap
 
-        Entity* allocate_memory(unsigned int t_size, std::type_info& info);
+        Entity* allocate_memory(unsigned int t_size, Entity_ID id);
 
         ~Table() { delete [] memory; };
     };
@@ -112,7 +117,7 @@ namespace manager{
     };
 
 
-    class Value : protected Entity{
+    class Value : public Entity{
     private:
         unsigned int memory_used;
     protected:
@@ -126,7 +131,7 @@ namespace manager{
     };
 
 
-    class Link : protected Entity{
+    class Link : public Entity{
     private:
         Entity* ptr;
     protected:
@@ -138,7 +143,7 @@ namespace manager{
     };
 
 
-    class Array : protected Entity{
+    class Array : public Entity{
     private:
         unsigned int memory_used;
         unsigned int element_size;
@@ -154,7 +159,7 @@ namespace manager{
     };
 
 
-    class DivSeg : protected Entity{
+    class DivSeg : public Entity{
     private:
         unsigned int memory_used;
         unsigned int element_size;

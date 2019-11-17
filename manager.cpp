@@ -47,9 +47,40 @@ namespace manager{
         free_blocks.insert(mark, newcomer);
     }
 
-    Entity* Table::allocate_memory(unsigned int t_size, std::type_info &info) {
+    Entity* Table::allocate_memory(unsigned int t_size, Entity_ID id) noexcept(false) {
+        auto mark = std::find_if(free_blocks.begin(),
+                free_blocks.end(),
+                [t_size](Unit un) -> bool { return un.size > t_size; });
+
+        if(mark == free_blocks.end()){
+            defragmentation();
+            mark = std::find_if(free_blocks.begin(),
+                                free_blocks.end(),
+                                [t_size](Unit un) -> bool { return un.size > t_size; });
+            if(mark == free_blocks.end()) throw std::runtime_error("not enough memory");
+        }
+        //TODO finish this function
 
     }
 
 
+    Entity *Entity::create_Entity(Entity_ID id) noexcept(false) {
+        Entity* ptr;
+        switch(id){
+            case Value_ID:
+                ptr = new Value;
+                break;
+
+            case Array_ID:
+                ptr = new Array;
+                break;
+
+            case DivSeg_ID:
+                ptr = new DivSeg;
+                break;
+            default:
+                throw std::domain_error("unknown entity id");
+        }
+        return
+    }
 }
