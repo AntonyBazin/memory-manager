@@ -50,7 +50,7 @@ namespace manager{
     Entity* Table::allocate_memory(unsigned int t_size, Entity_ID id) noexcept(false) {
         auto mark = std::find_if(free_blocks.begin(),
                 free_blocks.end(),
-                [t_size](Unit un) -> bool { return un.size > t_size; });
+                [t_size](Unit un) -> bool { return un.size >= t_size; });
 
         if(mark == free_blocks.end()){
             defragmentation();
@@ -59,8 +59,20 @@ namespace manager{
                                 [t_size](Unit un) -> bool { return un.size > t_size; });
             if(mark == free_blocks.end()) throw std::runtime_error("not enough memory");
         }
-        //TODO finish this function
 
+        unsigned int strt = mark->starter_address;
+        
+        if(mark->size == t_size){
+            free_blocks.erase(mark);
+        } else{
+            mark->starter_address += t_size;
+            mark->size -= t_size;
+        }
+
+        Entity* new_entity = Entity::create_Entity(id);
+        Unit pos(strt, t_size, true);
+        new_entity->set_pos(pos);
+        return new_entity;
     }
 
 
@@ -82,5 +94,9 @@ namespace manager{
                 throw std::domain_error("unknown entity id");
         }
         return
+    }
+
+    void Entity::set_pos(Unit un) {
+        position = un;
     }
 }

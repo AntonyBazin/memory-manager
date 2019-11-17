@@ -44,6 +44,7 @@ namespace manager{
         Unit position;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
+        void set_pos(Unit un);
         explicit Entity(Unit un, std::string nm  = "default_name") :
         position(un),
         name(std::move(nm)) {};
