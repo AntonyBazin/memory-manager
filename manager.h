@@ -8,6 +8,7 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 #include <typeinfo>
 
 namespace manager{
@@ -90,7 +91,7 @@ namespace manager{
 
         void defragmentation();   // obvious
 
-        void mark_free(unsigned int t_strt, unsigned int t_size);   // for programs to return memory to heap
+        void mark_free(unsigned int t_strt, unsigned int t_size) noexcept(false);   // for programs to return memory to heap
 
         Entity* allocate_memory(unsigned int t_size, std::type_info& info);
 
