@@ -47,4 +47,8 @@ namespace manager{
         fptr[6] = &Program::d_calc_memory;
     }
 
+    int Program::request_memory(unsigned int t_amout) {
+        
+    }
+
 }

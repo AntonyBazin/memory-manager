@@ -66,7 +66,7 @@ namespace manager{
         static const int menus = 7;
         static std::string menu[menus];
 
-        int request_memory(unsigned int t_amout, Entity* ptr);
+        int request_memory(unsigned int t_amout);
         void refuse_divseg(Entity*);
         void free_entity(unsigned int t_index);
         void free_all_memory();
