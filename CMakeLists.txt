@@ -3,4 +3,4 @@ project(Memory_manager)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Memory_manager main.cpp manager.cpp)
+add_executable(Memory_manager main.cpp manager.cpp table.cpp program.cpp)

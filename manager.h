@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
+#include <iostream>
 
 namespace manager{
 
@@ -60,27 +61,34 @@ namespace manager{
         std::vector<Entity*> entities;
         std::string file_address;
         const unsigned int memory_quota;
-    public:
-        Program() :
-        entities({}),
-        file_address("default"),
-        memory_quota(50) {};
+        unsigned int get_memory_used() const;
 
-        explicit Program(unsigned int t_mem = 50, std::string t_addr = "default") :
-        memory_quota(t_mem),
-        file_address(std::move(t_addr)),
-        entities({}) {};
+        static const int menus = 7;
+        static std::string menu[menus];
 
-        void request_memory(unsigned int t_amout, Entity* ptr);
-
+        int request_memory(unsigned int t_amout, Entity* ptr);
         void refuse_divseg(Entity*);
         void free_entity(unsigned int t_index);
         void free_all_memory();
+        std::ostream& show_all(std::ostream&) const;
+        std::ostream& show_divsegs(std::ostream&) const;
 
-        unsigned int memory_used() const;
+        int d_request_memory();
+        int d_free_memory();
+        int d_use_divsegs();
+        int d_show_all();
+        int d_show_divsegs();
+        int d_calc_memory();
 
-        std::ostream& show_all(std::ostream&);
-        std::ostream& show_divsegs(std::ostream&);
+        int answer(std::iostream&, std::string alternatives[], int n);
+
+        int (Program::*fptr[7])();
+    public:
+        Program();
+
+        explicit Program(unsigned int t_mem = 50, std::string t_addr = "default");
+
+        int run(std::iostream&);
 
         ~Program();
     };
@@ -90,7 +98,7 @@ namespace manager{
     private:
         static const int max_size = 300;
         unsigned int current_size;
-        static unsigned char *memory;
+        static std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
     public:
         Table();
@@ -101,7 +109,7 @@ namespace manager{
 
         Entity* allocate_memory(unsigned int t_size, Entity_ID id);
 
-        ~Table() { delete [] memory; };
+        ~Table() = default;
     };
 
 
