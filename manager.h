@@ -67,29 +67,29 @@ namespace manager{
         static const int menus = 8;
         static std::string menu[menus];
 
-        int request_memory(unsigned int t_amout, Entity_ID t_id, Table&);
+        Entity* request_memory(unsigned int t_amount, Entity_ID t_id, Table&);
         void refuse_divseg(Entity*);
         void free_entity(unsigned int t_index);
         void free_all_memory();
         std::ostream& show_all(std::ostream&) const;
         std::ostream& show_divsegs(std::ostream&) const;
 
-        int d_request_memory();
-        int d_free_memory();
-        int d_use_divsegs();
-        int d_show_all();
-        int d_show_divsegs();
-        int d_calc_memory();
+        int d_request_memory(Table&);
+        int d_free_memory(Table&);
+        int d_use_divsegs(Table&);
+        int d_show_all(Table&);
+        int d_show_divsegs(Table&);
+        int d_calc_memory(Table&);
 
         int answer(std::iostream&, std::string alternatives[], int n);
 
-        int (Program::*fptr[7])();
+        int (Program::*fptr[7])(Table&);
     public:
         Program();
 
         explicit Program(unsigned int t_mem = 50, std::string t_addr = "default");
 
-        int run(std::iostream&);
+        int run(std::iostream&, Table&);
 
         ~Program();
     };

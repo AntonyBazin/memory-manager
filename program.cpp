@@ -17,10 +17,10 @@ namespace manager{
 
 
 
-    int Program::run(std::iostream& strm) {
+    int Program::run(std::iostream& strm, Table& table) {
         int rc;
         while(rc = answer(strm, menu, menus)){
-            (this->*fptr[rc])();
+            (this->*fptr[rc])(table);
         }
         std::cout << "That's all. Bye!" << std::endl;
         return 0;
@@ -56,8 +56,21 @@ namespace manager{
 
 
 
-    int Program::request_memory(unsigned int t_amout, Entity_ID t_id, Table& table) {
-        
+    Entity* Program::request_memory(unsigned int t_amount, Entity_ID t_id, Table& table) {
+        Entity* ptr = nullptr;
+        try{
+            ptr = table.allocate_memory(t_amount, t_id);
+        }
+        catch(std::runtime_error &rt){
+            throw;
+        }
+        catch(...){
+            
+        }
+
+
+
+        return ptr;
     }
 
 }
