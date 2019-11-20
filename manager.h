@@ -5,12 +5,13 @@
 #ifndef MEMORY_MANAGER_MANAGER_H
 #define MEMORY_MANAGER_MANAGER_H
 
+#include <algorithm>
+#include <vector>
 #include <string>
 #include <stdexcept>
-#include <vector>
-#include <algorithm>
-#include <typeinfo>
 #include <iostream>
+
+
 
 namespace manager{
 
@@ -58,15 +59,15 @@ namespace manager{
 
     class Program{
     private:
-        std::vector<Entity*> entities;
+        Entity* entities;
         std::string file_address;
         const unsigned int memory_quota;
         unsigned int get_memory_used() const;
 
-        static const int menus = 7;
+        static const int menus = 8;
         static std::string menu[menus];
 
-        int request_memory(unsigned int t_amout);
+        int request_memory(unsigned int t_amout, Entity_ID t_id, Table&);
         void refuse_divseg(Entity*);
         void free_entity(unsigned int t_index);
         void free_all_memory();
