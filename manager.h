@@ -29,11 +29,11 @@ namespace manager{
 
 
     struct Unit{
-        unsigned int starter_address;
-        unsigned int size;
+        size_t starter_address;
+        size_t size;
         bool active;
 
-        Unit(unsigned int t_strt, unsigned int t_size, bool t_actv) :
+        Unit(size_t t_strt, size_t t_size, bool t_actv) :
         starter_address(t_strt), size(t_size), active(t_actv){};
 
         Unit() : starter_address(0), size(0), active(false) {};
@@ -50,26 +50,25 @@ namespace manager{
         explicit Entity(Unit un, std::string nm  = "default_name") :
         position(un),
         name(std::move(nm)) {};
-
+        size_t memory_used();
         virtual ~Entity() = default;
-
         static Entity* create_Entity(Entity_ID id) noexcept(false);
     };
 
 
     class Program{
     private:
-        Entity* entities;
+        std::vector<Entity*> entities;
         std::string file_address;
-        const unsigned int memory_quota;
-        unsigned int get_memory_used() const;
+        const size_t memory_quota;
+        size_t get_memory_used() const;
 
         static const int menus = 8;
         static std::string menu[menus];
 
-        Entity* request_memory(unsigned int t_amount, Entity_ID t_id, Table&);
-        void refuse_divseg(Entity*);
-        void free_entity(unsigned int t_index);
+        Entity* request_memory(size_t t_amount, Entity_ID t_id, Table&) noexcept(false);
+        void refuse_divseg(Entity*) noexcept(false);
+        void free_entity(size_t t_index) noexcept(false);
         void free_all_memory();
         std::ostream& show_all(std::ostream&) const;
         std::ostream& show_divsegs(std::ostream&) const;
@@ -87,10 +86,10 @@ namespace manager{
     public:
         Program();
 
-        explicit Program(unsigned int t_mem = 50, std::string t_addr = "default");
+        explicit Program(size_t t_mem = 50, std::string t_addr = "default");
 
         int run(std::iostream&, Table&);
-
+        Program* clone();
         ~Program();
     };
 
@@ -98,7 +97,7 @@ namespace manager{
     class Table{
     private:
         static const int max_size = 300;
-        unsigned int current_size;
+        size_t current_size;
         static std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
     public:
@@ -106,9 +105,9 @@ namespace manager{
 
         void defragmentation();   // obvious
 
-        void mark_free(unsigned int t_strt, unsigned int t_size) noexcept(false);   // for programs to return memory to heap
+        void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
 
-        Entity* allocate_memory(unsigned int t_size, Entity_ID id);
+        Entity* allocate_memory(size_t t_size, Entity_ID id);
 
         ~Table() = default;
     };
@@ -116,11 +115,11 @@ namespace manager{
 
     class App{
     private:
-        unsigned int programs_count;
+        size_t programs_count;
         Program* active_programs;
     public:
         std::ostream& show_all(std::ostream&);
-        std::ostream& print_prog_memory(std::ostream&, unsigned int t_index);
+        std::ostream& print_prog_memory(std::ostream&, size_t t_index);
         std::ostream& show_errors(std::ostream&);
         std::ostream& show_incorrect_links(std::ostream&);
         void command(std::iostream&);  // for menus
@@ -129,7 +128,7 @@ namespace manager{
 
     class Value : public Entity{
     private:
-        unsigned int memory_used;
+        size_t memory_used;
     protected:
         std::ostream& show(std::ostream&) const;
     public:
@@ -155,34 +154,34 @@ namespace manager{
 
     class Array : public Entity{
     private:
-        unsigned int memory_used;
-        unsigned int element_size;
+        size_t memory_used;
+        size_t element_size;
     protected:
         std::ostream& show(std::ostream&) const;
     public:
         Array();
         Array(std::vector<int> vec);
-        int& operator [](unsigned int t_index);
-        int operator [](unsigned int t_index) const;
-        std::vector<int> operator ()(unsigned int t_begin, unsigned int t_end);
+        int& operator [](size_t t_index);
+        int operator [](size_t t_index) const;
+        std::vector<int> operator ()(size_t t_begin, size_t t_end);
         friend std::ostream& operator << (std::ostream&, const Array);
     };
 
 
     class DivSeg : public Entity{
     private:
-        unsigned int memory_used;
-        unsigned int element_size;
-        unsigned int amount_of_programs;
-        Program* programs;
+        size_t memory_used;
+        size_t element_size;
+        std::vector<Program*> programs;
     protected:
         std::ostream& show(std::ostream&) const;
     public:
         DivSeg();
         DivSeg(std::vector<int> vec);
-        int& operator [](unsigned int t_index);
-        int operator [](unsigned int t_index) const;
-        void free_program(Program* program);
+        int& operator [](size_t t_index);
+        int operator [](size_t t_index) const;
+        void free_program(Program*);
+        void erase_one(Program*);
         void cleanup();  // delete all program links
     };
 

@@ -29,7 +29,7 @@ namespace manager{
 
 
     Program::Program() : memory_quota(50) {
-        entities = nullptr;
+        entities = {};
         file_address = "default";
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
@@ -42,9 +42,9 @@ namespace manager{
 
 
 
-    Program::Program(unsigned int t_mem, std::string t_addr) : memory_quota(t_mem) {
+    Program::Program(size_t t_mem, std::string t_addr) : memory_quota(t_mem) {
         file_address = std::move(t_addr);
-        entities = nullptr;
+        entities = {};
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
         fptr[2] = &Program::d_free_memory;
@@ -56,21 +56,44 @@ namespace manager{
 
 
 
-    Entity* Program::request_memory(unsigned int t_amount, Entity_ID t_id, Table& table) {
+    Entity* Program::request_memory(size_t t_amount, Entity_ID t_id, Table& table) noexcept(false) {
         Entity* ptr = nullptr;
         try{
             ptr = table.allocate_memory(t_amount, t_id);
         }
-        catch(std::runtime_error &rt){
+        catch(...){
             throw;
         }
-        catch(...){
-            
-        }
-
-
-
+        entities.emplace_back(ptr);
         return ptr;
     }
+
+
+
+    void Program::free_entity(size_t t_index) noexcept(false) {
+        if(entities.at(t_index)) delete entities.at(t_index);
+        auto mark = entities.begin() + t_index;
+        entities.erase(mark);
+    }
+
+
+
+    void Program::refuse_divseg(Entity* ptr) noexcept(false) {
+        if(typeid(*ptr) != typeid(DivSeg))
+            throw(std::invalid_argument("not a divseg argument"));
+        auto dptr = dynamic_cast<DivSeg*>(ptr);
+        dptr->erase_one(this);
+        auto mark = std::find(entities.begin(), entities.end(), ptr);
+        entities.erase(mark);
+    }
+
+    size_t Program::get_memory_used() const {
+        size_t sz = 0;
+        std::for_each(entities.begin(),
+                entities.end(),
+                [&sz](Entity* en) { sz += en->memory_used(); });
+        return sz;
+    }
+
 
 }

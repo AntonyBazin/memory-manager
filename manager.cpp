@@ -31,4 +31,8 @@ namespace manager{
         position = un;
     }
 
+    size_t Entity::memory_used() {
+        return position.size;
+    }
+
 }

@@ -22,7 +22,7 @@ namespace manager{
         for(vec_it = free_blocks.begin() + 1; vec_it != free_blocks.end(); ++vec_it){
             if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size){
                 --vec_it;
-                unsigned int sz = (vec_it + 1)->size;
+                size_t sz = (vec_it + 1)->size;
                 free_blocks.erase(vec_it + 1);
                 vec_it->size += sz;
             }
@@ -31,15 +31,15 @@ namespace manager{
 
 
 
-    void Table::mark_free(unsigned int t_strt, unsigned int t_size) noexcept(false) {
+    void Table::mark_free(size_t t_strt, size_t t_size) noexcept(false) {
         if(t_strt < 0)
             throw std::out_of_range("starter address below zero");
         if(t_strt > max_size)
             throw std::out_of_range("starter address higher than max size");
         auto vec_it = free_blocks.begin();
         for(; vec_it != free_blocks.end(); ++vec_it){  // checks for invalid
-            unsigned int current_start = vec_it->starter_address;
-            unsigned int current_end = vec_it->starter_address + vec_it->size;
+            size_t current_start = vec_it->starter_address;
+            size_t current_end = vec_it->starter_address + vec_it->size;
 
             if(current_start <= t_strt && current_end >= t_strt)
                 throw std::invalid_argument("attempt to free memory with start before or at arg");
@@ -56,7 +56,7 @@ namespace manager{
 
 
 
-    Entity* Table::allocate_memory(unsigned int t_size, Entity_ID id) noexcept(false) {
+    Entity* Table::allocate_memory(size_t t_size, Entity_ID id) noexcept(false) {
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_size](Unit un) -> bool { return un.size >= t_size; });
@@ -69,7 +69,7 @@ namespace manager{
             if(mark == free_blocks.end()) throw std::runtime_error("not enough memory");
         }
 
-        unsigned int strt = mark->starter_address;
+        size_t strt = mark->starter_address;
 
         if(mark->size == t_size){
             free_blocks.erase(mark);
