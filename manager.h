@@ -47,6 +47,7 @@ namespace manager{
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
         void set_pos(Unit un);
+        Unit get_pos() const;
         explicit Entity(Unit un, std::string nm  = "default_name") :
         position(un),
         name(std::move(nm)) {};
@@ -68,8 +69,8 @@ namespace manager{
 
         Entity* request_memory(size_t t_amount, Entity_ID t_id, Table&) noexcept(false);
         void refuse_divseg(Entity*) noexcept(false);
-        void free_entity(size_t t_index) noexcept(false);
-        void free_all_memory();
+        void free_entity(size_t t_index, Table&) noexcept(false);
+        void free_all_memory(Table&) noexcept;
         std::ostream& show_all(std::ostream&) const;
         std::ostream& show_divsegs(std::ostream&) const;
 

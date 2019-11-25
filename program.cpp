@@ -70,7 +70,9 @@ namespace manager{
 
 
 
-    void Program::free_entity(size_t t_index) noexcept(false) {
+    void Program::free_entity(size_t t_index, Table& table) noexcept(false) {
+        Unit pos = entities.at(t_index)->get_pos();
+        table.mark_free(pos.starter_address, pos.size);
         if(entities.at(t_index)) delete entities.at(t_index);
         auto mark = entities.begin() + t_index;
         entities.erase(mark);
@@ -87,12 +89,26 @@ namespace manager{
         entities.erase(mark);
     }
 
+
+
     size_t Program::get_memory_used() const {
         size_t sz = 0;
         std::for_each(entities.begin(),
                 entities.end(),
                 [&sz](Entity* en) { sz += en->memory_used(); });
         return sz;
+    }
+
+
+
+    void Program::free_all_memory(Table& table) noexcept{
+        auto vec_it = entities.begin();
+        for(; vec_it != entities.end(); ++vec_it){
+            Unit current_pos = (*vec_it)->get_pos();
+            table.mark_free(current_pos.starter_address, current_pos.size);
+            delete (*vec_it);
+        }
+        entities.clear();
     }
 
 

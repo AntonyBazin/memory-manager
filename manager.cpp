@@ -27,12 +27,23 @@ namespace manager{
         return ptr;
     }
 
+
+
     void Entity::set_pos(Unit un) {
         position = un;
     }
 
+
+
     size_t Entity::memory_used() {
         return position.size;
     }
+
+
+
+    Unit Entity::get_pos() const{
+        return position;
+    }
+
 
 }
