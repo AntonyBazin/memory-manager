@@ -82,6 +82,8 @@ namespace manager{
         return pos;
     }
 
+
+
     std::vector<unsigned char> Table::read_bytes(size_t t_strt, size_t t_size) noexcept(false) {
         if(t_strt < 0 || t_size <= 0)
             throw std::invalid_argument("argument below zero");
@@ -93,6 +95,16 @@ namespace manager{
         std::vector<unsigned char> answer;
         answer.insert(answer.begin(), begin, end);
         return answer;
+    }
+
+
+
+    void Table::write(size_t t_strt, size_t t_size, std::vector<unsigned char> t_vec) noexcept(false) {
+        if(t_size > max_size - t_strt)
+            throw std::invalid_argument("value too big to write");
+        for(size_t i = t_strt; i <= t_strt + t_size; ++i){
+            memory[i] = t_vec[i - t_strt];
+        }
     }
 
 

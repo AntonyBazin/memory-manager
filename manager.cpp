@@ -54,4 +54,14 @@ namespace manager{
         }
         return v;
     }
+
+    void Value::set_instance(Table& table, unsigned int t_new_inst) noexcept(false) {
+        unsigned char c[sizeof(int)];
+        auto p = reinterpret_cast<unsigned char *>(&t_new_inst);
+        for(int i = 0; i < 4; ++i){
+            c[3 -i] = p[i];
+        }
+        std::vector<unsigned char> v(c, c + sizeof(int));
+        table.write(position.starter_address, position.size, v);
+    }
 }

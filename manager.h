@@ -74,6 +74,7 @@ namespace manager{
         void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
         Unit allocate_memory(size_t t_size, Entity_ID id);
         std::vector<unsigned char> read_bytes(size_t t_strt, size_t t_size) noexcept(false);
+        void write(size_t t_strt, size_t t_size, std::vector<unsigned char>t_vec) noexcept(false);
         ~Table() = default;
     };
 
@@ -139,7 +140,7 @@ namespace manager{
         Value();
         Value(int val);
         unsigned int get_instance(Table&);
-        int set_instance(Table&, int t_new_inst);
+        void set_instance(Table&, unsigned int t_new_inst) noexcept(false);
         Entity* create_link();
     };
 
