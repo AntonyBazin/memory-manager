@@ -35,7 +35,7 @@ namespace manager{
 
 
 
-    size_t Entity::memory_used() {
+    size_t Entity::memory_used() const {
         return position.size;
     }
 
@@ -46,4 +46,12 @@ namespace manager{
     }
 
 
+    unsigned int Value::get_instance(Table& table) {
+        unsigned int v = 0;
+        auto rc = table.read_bytes(position.starter_address, position.size);
+        for(size_t i = 0; i < position.size; ++i){
+            v = v | (rc[i] << ((position.size - 1)*8 - i*8));
+        }
+        return v;
+    }
 }

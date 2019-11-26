@@ -42,35 +42,58 @@ namespace manager{
 
     class Entity{
     protected:
+        Entity_ID id;
         std::string name;
         Unit position;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
         void set_pos(Unit un);
         Unit get_pos() const;
-        explicit Entity(Unit un, std::string nm  = "default_name") :
+        explicit Entity(Unit un, Entity_ID t_id, std::string nm  = "default_name") :
         position(un),
+        id(t_id),
         name(std::move(nm)) {};
-        size_t memory_used();
+        size_t memory_used() const;
         virtual ~Entity() = default;
+        Entity_ID get_id() const { return id; }
         static Entity* create_Entity(Entity_ID id) noexcept(false);
     };
 
 
+
+    class Table{
+    private:
+        static const int max_size = 300;
+        size_t current_size;
+        static std::vector<unsigned char> memory;
+        std::vector<Unit> free_blocks;
+
+    public:
+        Table();
+        void defragmentation();   // obvious
+        void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
+        Unit allocate_memory(size_t t_size, Entity_ID id);
+        std::vector<unsigned char> read_bytes(size_t t_strt, size_t t_size) noexcept(false);
+        ~Table() = default;
+    };
+
+
+
     class Program{
     private:
-        std::vector<Entity*> entities;
-        std::string file_address;
-        const size_t memory_quota;
-        size_t get_memory_used() const;
+        std::vector<Entity*> entities; // the entities the program can operate with
+        std::string file_address;    // file address
+        const size_t memory_quota;   // max amount of memory available to this program
+        Table table;  // a program has no meaning w/o a table to store data in
 
         static const int menus = 8;
         static std::string menu[menus];
 
-        Entity* request_memory(size_t t_amount, Entity_ID t_id, Table&) noexcept(false);
+        size_t get_memory_used() const;   // calculate memory usage
+        Entity* request_memory(size_t t_amount, Entity_ID t_id) noexcept(false);
         void refuse_divseg(Entity*) noexcept(false);
-        void free_entity(size_t t_index, Table&) noexcept(false);
-        void free_all_memory(Table&) noexcept;
+        void free_entity(size_t t_index) noexcept(false);
+        void free_all_memory() noexcept;
         std::ostream& show_all(std::ostream&) const;
         std::ostream& show_divsegs(std::ostream&) const;
 
@@ -81,37 +104,19 @@ namespace manager{
         int d_show_divsegs(Table&);
         int d_calc_memory(Table&);
 
-        int answer(std::iostream&, std::string alternatives[], int n);
-
+        int answer(std::string alternatives[], int n);
         int (Program::*fptr[7])(Table&);
+
     public:
-        Program();
-
-        explicit Program(size_t t_mem = 50, std::string t_addr = "default");
-
-        int run(std::iostream&, Table&);
-        Program* clone();
+        Program() = delete;
+        explicit Program(Table& table, size_t t_mem = 50, std::string t_addr = "default");
+        int run();
+        Program clone();
+        Program(const Program&);
+        Program(Program&&) noexcept;
         ~Program();
     };
 
-
-    class Table{
-    private:
-        static const int max_size = 300;
-        size_t current_size;
-        static std::vector<unsigned char> memory;
-        std::vector<Unit> free_blocks;
-    public:
-        Table();
-
-        void defragmentation();   // obvious
-
-        void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
-
-        Entity* allocate_memory(size_t t_size, Entity_ID id);
-
-        ~Table() = default;
-    };
 
 
     class App{
@@ -128,15 +133,13 @@ namespace manager{
 
 
     class Value : public Entity{
-    private:
-        size_t memory_used;
     protected:
-        std::ostream& show(std::ostream&) const;
+        std::ostream& show(std::ostream&) const override;
     public:
         Value();
         Value(int val);
-        int get_instance();
-        int set_instance(int t_new_inst);
+        unsigned int get_instance(Table&);
+        int set_instance(Table&, int t_new_inst);
         Entity* create_link();
     };
 

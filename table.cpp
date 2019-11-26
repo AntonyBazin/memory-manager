@@ -56,7 +56,7 @@ namespace manager{
 
 
 
-    Entity* Table::allocate_memory(size_t t_size, Entity_ID id) noexcept(false) {
+    Unit Table::allocate_memory(size_t t_size, Entity_ID id) noexcept(false) {
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_size](Unit un) -> bool { return un.size >= t_size; });
@@ -78,10 +78,21 @@ namespace manager{
             mark->size -= t_size;
         }
 
-        Entity* new_entity = Entity::create_Entity(id);
         Unit pos(strt, t_size, true);
-        new_entity->set_pos(pos);
-        return new_entity;
+        return pos;
+    }
+
+    std::vector<unsigned char> Table::read_bytes(size_t t_strt, size_t t_size) noexcept(false) {
+        if(t_strt < 0 || t_size <= 0)
+            throw std::invalid_argument("argument below zero");
+        if(t_strt > max_size || t_size > max_size)
+            throw std::invalid_argument("argument above maximum available memory");
+
+        auto begin = memory.begin() + t_strt;
+        auto end = memory.begin() + t_strt + t_size;
+        std::vector<unsigned char> answer;
+        answer.insert(answer.begin(), begin, end);
+        return answer;
     }
 
 
