@@ -19,11 +19,10 @@ namespace manager{
     class Program;
     class App;
     class Entity;
-    class Array;
-    class Link;
-    class Value;
-    class DivSeg;
-
+    template<class T>class Array;
+    template<class T>class Link;
+    template<class T> class Value;
+    template<class T>class DivSeg;
 
     enum Entity_ID{ Value_ID = 0, Array_ID = 1, DivSeg_ID = 2 };
 
@@ -38,6 +37,7 @@ namespace manager{
 
         Unit() : starter_address(0), size(0), active(false) {};
     };
+
 
 
     class Entity{
@@ -56,7 +56,7 @@ namespace manager{
         size_t memory_used() const;
         virtual ~Entity() = default;
         Entity_ID get_id() const { return id; }
-        static Entity* create_Entity(Entity_ID id) noexcept(false);
+        template<class T> static Entity* create_Entity(Entity_ID id) noexcept(false);
     };
 
 
@@ -64,7 +64,6 @@ namespace manager{
     class Table{
     private:
         static const int max_size = 300;
-        size_t current_size;
         static std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
 
@@ -91,7 +90,7 @@ namespace manager{
         static std::string menu[menus];
 
         size_t get_memory_used() const;   // calculate memory usage
-        Entity* request_memory(size_t t_amount, Entity_ID t_id) noexcept(false);
+        template<class T> Entity* request_memory(size_t t_amount, Entity_ID t_id) noexcept(false);
         void refuse_divseg(Entity*) noexcept(false);
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
@@ -133,18 +132,23 @@ namespace manager{
     };
 
 
+
+    template<class T>
     class Value : public Entity{
     protected:
         std::ostream& show(std::ostream&) const override;
     public:
         Value();
         Value(int val);
-        unsigned int get_instance(Table&);
-        void set_instance(Table&, unsigned int t_new_inst) noexcept(false);
+        size_t get_size();
+        T get_instance(Table&); //TODO
+        void set_instance(Table&, T new_inst) noexcept(false);
         Entity* create_link();
     };
 
 
+
+    template<class T>
     class Link : public Entity{
     private:
         Entity* ptr;
@@ -152,27 +156,28 @@ namespace manager{
         std::ostream& show(std::ostream&) const;
     public:
         Link(Entity *ptr);
-        int get_instance();
-        int set_instance(int t_new_inst);
+        T get_instance(Table&);
+        void set_instance(Table&, T new_inst);
     };
 
 
+
+    template<class T>
     class Array : public Entity{
-    private:
-        size_t memory_used;
-        size_t element_size;
     protected:
         std::ostream& show(std::ostream&) const;
     public:
         Array();
-        Array(std::vector<int> vec);
+        Array(std::vector<T> vec);
         int& operator [](size_t t_index);
         int operator [](size_t t_index) const;
-        std::vector<int> operator ()(size_t t_begin, size_t t_end);
-        friend std::ostream& operator << (std::ostream&, const Array);
+        std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
+        void set_array(Table&, std::vector<T>);
     };
 
 
+
+    template<class T>
     class DivSeg : public Entity{
     private:
         size_t memory_used;

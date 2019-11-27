@@ -6,21 +6,22 @@
 
 namespace manager{
 
-
+    template<class T>
     Entity *Entity::create_Entity(Entity_ID id) noexcept(false) {
         Entity* ptr;
         switch(id){
             case Value_ID:
-                ptr = new Value;
+                ptr = new Value<T>;
                 break;
 
             case Array_ID:
-                ptr = new Array;
+                ptr = new Array<T>;
                 break;
 
             case DivSeg_ID:
-                ptr = new DivSeg;
+                ptr = new DivSeg<T>;
                 break;
+
             default:
                 throw std::domain_error("unknown entity id");
         }
@@ -46,7 +47,8 @@ namespace manager{
     }
 
 
-    unsigned int Value::get_instance(Table& table) {
+    template<class T>
+    T Value<T>::get_instance(Table& table) {
         unsigned int v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
         for(size_t i = 0; i < position.size; ++i){
@@ -55,13 +57,53 @@ namespace manager{
         return v;
     }
 
-    void Value::set_instance(Table& table, unsigned int t_new_inst) noexcept(false) {
-        unsigned char c[sizeof(int)];
-        auto p = reinterpret_cast<unsigned char *>(&t_new_inst);
-        for(int i = 0; i < 4; ++i){
-            c[3 -i] = p[i];
+
+
+    template<class T>
+    void Value<T>::set_instance(Table& table, T new_inst) noexcept(false) {
+        size_t size = sizeof(T);
+        unsigned char c[size];
+        auto p = reinterpret_cast<unsigned char *>(&new_inst);
+        for(size_t i = 0; i < size; ++i){
+            c[size - 1 - i] = p[i];
         }
-        std::vector<unsigned char> v(c, c + sizeof(int));
+        std::vector<unsigned char> v(c, c + size);
         table.write(position.starter_address, position.size, v);
     }
+
+
+
+    template<class T>
+    size_t Value<T>::get_size() {
+        return sizeof(T);
+    }
+
+
+
+    template<class T>
+    T Link<T>::get_instance(Table& table) {
+        if(this->id == Value_ID){
+            return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
+        } else {
+            return dynamic_cast<DivSeg<T>*>(ptr)->get_instance(table);
+        }
+    }
+
+
+
+    template<class T>
+    void Link<T>::set_instance(Table& table, T new_inst) noexcept(false) {
+        if(this->id == Value_ID){
+            dynamic_cast<Value<T>*>(ptr)->set_instance(table, new_inst);
+        } else{
+            dynamic_cast<DivSeg<T>*>(ptr)->set_instance(table, new_inst);
+        }
+    }
+
+
+    template<class T>
+    std::vector<T> Array<T>::operator()(Table &, size_t t_begin, size_t t_end) {
+        return std::vector<T>();
+    }
+
 }

@@ -12,7 +12,7 @@ namespace manager{
                                    "2. Free memory",
                                    "3. Use div segments",
                                    "4. Show all memory info",
-                                   "5. Show div segs",
+                                   "5. Show div segments",
                                    "6. Calculate total memory used"};
 
 
@@ -42,13 +42,13 @@ namespace manager{
     }
 
 
-
+    template<class T>
     Entity* Program::request_memory(size_t t_amount, Entity_ID t_id) noexcept(false) {
         Unit rc;
         Entity* ptr = nullptr;
         try{
             rc = table.allocate_memory(t_amount, t_id);
-            ptr = Entity::create_Entity(t_id);
+            ptr = Entity::create_Entity<T>(t_id);
             ptr->set_pos(rc);
         }
         catch(...){
@@ -123,7 +123,7 @@ namespace manager{
         this->table  = prog.table;
         auto it = prog.entities.begin();  // this is a const iterator
         for(; it != prog.entities.end(); ++it){
-            this->entities.push_back(Entity::create_Entity( (*it)->get_id()) );
+            this->entities.push_back(Entity::create_Entity<>( (*it)->get_id()) );
         }
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
@@ -143,7 +143,7 @@ namespace manager{
         for(; it != prog.entities.end(); ++it){
             this->entities.push_back(*it);
         }
-
+        prog.entities.clear();
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
         fptr[2] = &Program::d_free_memory;
