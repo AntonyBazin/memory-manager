@@ -25,6 +25,7 @@ namespace manager{
     template<class T>class DivSeg;
 
     enum Entity_ID{ Value_ID = 0, Array_ID = 1, DivSeg_ID = 2, Link_ID = 3 };
+    enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE };
 
 
     struct Unit{
@@ -56,6 +57,7 @@ namespace manager{
         size_t memory_used() const;
         virtual ~Entity() = default;
         Entity_ID get_id() const { return id; }
+        static Entity* generate_Entity(Entity_ID id, Type_ID type) noexcept(false);
         template<class T> static Entity* create_Entity(Entity_ID id) noexcept(false);
     };
 
@@ -105,6 +107,7 @@ namespace manager{
         int d_calc_memory(Table&);
 
         int (Program::*fptr[7])(Table&);
+        int answer(int menus_count, std::string menus[]);
 
     public:
         Program() = delete;
@@ -138,11 +141,11 @@ namespace manager{
         std::ostream& show(std::ostream&) const override;
     public:
         Value();
-        Value(const T val);
         size_t get_size();
         T get_instance(Table&);
         void set_instance(Table&, T new_inst) noexcept(false);
         Entity* create_link() const;
+        static Entity* create_Value(Entity_ID id) noexcept(false);
     };
 
 
@@ -154,10 +157,11 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const;
     public:
-        Link(const Entity*);
+        explicit Link(const Entity*);
         T get_instance(Table&);
         void set_instance(Table&, T new_inst);
         Entity* get_core_entity();
+        static Entity* create_Link(Entity_ID id) noexcept(false);
     };
 
 
@@ -168,11 +172,11 @@ namespace manager{
         std::ostream& show(std::ostream&) const;
     public:
         Array();
-        Array(std::vector<T> vec);
         int& operator [](size_t t_index);
         int operator [](size_t t_index) const;
         std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
         void set_array(Table&, std::vector<T>);
+        static Entity* create_Array(Entity_ID id) noexcept(false);
     };
 
 
@@ -180,19 +184,15 @@ namespace manager{
     template<class T>
     class DivSeg : public Entity{
     private:
-        size_t memory_used;
-        size_t element_size;
         std::vector<Program*> programs;
     protected:
         std::ostream& show(std::ostream&) const;
     public:
         DivSeg();
-        DivSeg(std::vector<int> vec);
-        int& operator [](size_t t_index);
-        int operator [](size_t t_index) const;
         void free_program(Program*);
         void erase_one(Program*);
         void cleanup();  // delete all program links
+        static Entity* create_DivSeg(Entity_ID id) noexcept(false);
     };
 
 }

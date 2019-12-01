@@ -6,6 +6,39 @@
 
 namespace manager{
 
+
+    Entity *Entity::generate_Entity(Entity_ID id, Type_ID type) noexcept(false) {
+        Entity* ptr;
+        switch(type){
+            case CHAR:
+                ptr = Entity::create_Entity<char>(id);
+                break;
+            case INT:
+                ptr = Entity::create_Entity<int>(id);
+                break;
+            case LONG:
+                ptr = Entity::create_Entity<long>(id);
+                break;
+            case LONGLONG:
+                ptr = Entity::create_Entity<long long>(id);
+                break;
+            case FLOAT:
+                ptr = Entity::create_Entity<float>(id);
+                break;
+            case DOUBLE:
+                ptr = Entity::create_Entity<double>(id);
+                break;
+            case LONGDOUBLE:
+                ptr = Entity::create_Entity<long double>(id);
+                break;
+            default:
+                throw std::domain_error("Unexpected type id");
+        }
+        return ptr;
+    }
+
+
+
     template<class T>
     Entity *Entity::create_Entity(Entity_ID id) noexcept(false) {
         Entity* ptr;
@@ -45,6 +78,7 @@ namespace manager{
     Unit Entity::get_pos() const{
         return position;
     }
+
 
 
     template<class T>
@@ -158,8 +192,10 @@ namespace manager{
     }
 
 
+
     template<class T>
-    std::vector<T> Array<T>::operator()(Table &, size_t t_begin, size_t t_end) {
+    std::vector<T> Array<T>::operator()(Table &, size_t t_begin, size_t t_end) { //todo
+
         return std::vector<T>();
     }
 

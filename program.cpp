@@ -19,7 +19,7 @@ namespace manager{
 
     int Program::run() {
         int rc;
-        while(rc = answer(menu, menus)){
+        while((rc = answer(menus, menu)){
             (this->*fptr[rc])(table);
         }
         std::cout << "That's all. Bye!" << std::endl;
@@ -69,11 +69,11 @@ namespace manager{
     }
 
 
-
+    template<class T>
     void Program::refuse_divseg(Entity* ptr) noexcept(false) {
-        if(typeid(*ptr) != typeid(DivSeg))
+        if(typeid(*ptr) != typeid(DivSeg<T>))
             throw(std::invalid_argument("not a divseg argument"));
-        auto dptr = dynamic_cast<DivSeg*>(ptr);
+        auto dptr = dynamic_cast<DivSeg<T>*>(ptr);
         dptr->erase_one(this);
         auto mark = std::find(entities.begin(), entities.end(), ptr);
         entities.erase(mark);
