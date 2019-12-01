@@ -81,7 +81,49 @@ namespace manager{
 
 
     template<class T>
-    T Link<T>::get_instance(Table& table) {
+    Entity* Value<T>::create_link() const {
+        Entity *ptr = new Link<T>(*this);
+        return ptr;
+    }
+
+
+
+    template<class T>
+    Link<T>::Link(const Entity* val) {
+        Entity* ent;
+        switch(ptr->get_id()){
+            case Value_ID:
+                ent = dynamic_cast<Value<T>*>(val);
+                break;
+            case Array_ID:
+                ent = dynamic_cast<Array<T>*>(val);
+                break;
+            case DivSeg_ID:
+                ent = dynamic_cast<DivSeg<T>*>(val);
+                break;
+            default:
+                ent = dynamic_cast<Link<T>*>(val)->get_core_entity();
+
+                switch(ptr->get_id()) {
+                    case Value_ID:
+                        ent = dynamic_cast<Value<T> *>(val);
+                        break;
+                    case Array_ID:
+                        ent = dynamic_cast<Array<T> *>(val);
+                        break;
+                    case DivSeg_ID:
+                        ent = dynamic_cast<DivSeg<T> *>(val);
+                        break;
+                }
+                break;
+        }
+        ptr = ent;
+    }
+
+
+
+    template<class T>
+    T Link<T>::get_instance(Table& table) { //todo
         if(this->id == Value_ID){
             return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
         } else {
@@ -91,12 +133,27 @@ namespace manager{
 
 
 
-    template<class T>
+    template<class T> // todo
     void Link<T>::set_instance(Table& table, T new_inst) noexcept(false) {
         if(this->id == Value_ID){
             dynamic_cast<Value<T>*>(ptr)->set_instance(table, new_inst);
         } else{
             dynamic_cast<DivSeg<T>*>(ptr)->set_instance(table, new_inst);
+        }
+    }
+
+
+
+    template<class T>
+    Entity *Link<T>::get_core_entity() {
+        if(ptr->get_id() != Link_ID){
+            return ptr;
+        } else{
+            Entity* ent = ptr;
+            while(ent->get_id() == Link_ID){  // getting out of all links
+                ent = dynamic_cast<Link<T>*>(ent)->ptr;
+            }
+            return ent;
         }
     }
 

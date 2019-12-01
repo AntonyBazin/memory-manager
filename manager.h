@@ -24,7 +24,7 @@ namespace manager{
     template<class T> class Value;
     template<class T>class DivSeg;
 
-    enum Entity_ID{ Value_ID = 0, Array_ID = 1, DivSeg_ID = 2 };
+    enum Entity_ID{ Value_ID = 0, Array_ID = 1, DivSeg_ID = 2, Link_ID = 3 };
 
 
     struct Unit{
@@ -104,7 +104,6 @@ namespace manager{
         int d_show_divsegs(Table&);
         int d_calc_memory(Table&);
 
-        int answer(std::string alternatives[], int n);
         int (Program::*fptr[7])(Table&);
 
     public:
@@ -139,11 +138,11 @@ namespace manager{
         std::ostream& show(std::ostream&) const override;
     public:
         Value();
-        Value(int val);
+        Value(const T val);
         size_t get_size();
-        T get_instance(Table&); //TODO
+        T get_instance(Table&);
         void set_instance(Table&, T new_inst) noexcept(false);
-        Entity* create_link();
+        Entity* create_link() const;
     };
 
 
@@ -155,9 +154,10 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const;
     public:
-        Link(Entity *ptr);
+        Link(const Entity*);
         T get_instance(Table&);
         void set_instance(Table&, T new_inst);
+        Entity* get_core_entity();
     };
 
 
