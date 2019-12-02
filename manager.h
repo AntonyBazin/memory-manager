@@ -46,6 +46,7 @@ namespace manager{
         Type_ID t_id;
         std::string name;
         Unit position;
+        size_t refs;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
         void set_pos(Unit un) noexcept;
@@ -54,10 +55,14 @@ namespace manager{
                 position(un),
                 e_id(ent_id),
                 t_id(type_id),
-                name(std::move(nm)) {};
+                name(std::move(nm)),
+                refs(0) {};
         size_t memory_used() const noexcept;
         Entity_ID get_entity_id() const { return e_id; }
         Type_ID get_type_id() const { return t_id; }
+        size_t refs_count() noexcept { return refs; }
+        void increment_refs() noexcept { ++refs; }
+        void decrement_refs() noexcept { --refs; }
 
         static Entity* generate_Entity(Entity_ID id, Type_ID type) noexcept(false);
         template<class T> static Entity* create_Entity(Entity_ID id) noexcept(false);
@@ -111,8 +116,6 @@ namespace manager{
         int answer(int menus_count, std::string menus[]);
         int (Program::*fptr[7])(Table&);
 
-        template<class T> friend class DivSeg;
-
     public:
         Program() = delete;
         explicit Program(Table& table, size_t t_mem = 50, std::string t_addr = "default");
@@ -128,7 +131,6 @@ namespace manager{
     class App{
     private:
         std::vector<Program> programs;
-        std::vector<Divseg<T>> segments;
     public:
         std::ostream& show_all(std::ostream&);
         std::ostream& print_prog_memory(std::ostream&, size_t t_index);
@@ -144,12 +146,13 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const override;
     public:
-        Value();
+        Value() = default;
         size_t get_size();
         T get_instance(Table&);
         void set_instance(Table&, T new_inst) noexcept(false);
         Entity* create_link() const;
         static Entity* create_Value(Entity_ID id) noexcept(false);
+        ~Value() override = default;
     };
 
 
@@ -175,28 +178,27 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const;
     public:
-        Array();
+        Array() = default;
         int& operator [](size_t t_index);
         int operator [](size_t t_index) const;
         std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
         void set_array(Table&, std::vector<T>);
         static Entity* create_Array(Entity_ID id) noexcept(false);
+        ~Array() override = default;
     };
 
 
 
     template<class T>
-    class DivSeg : public Array<T>{
+    class DivSeg : public Entity{
     private:
         std::vector<Program> programs;
-        size_t refs;  // to mark as free if
     protected:
         std::ostream& show(std::ostream&) const override;
     public:
-        size_t refs_count() { return refs; }
-        DivSeg();
-        void cleanup();  // delete all program links
-        void erase(Program&);
+        DivSeg() = default;
+        void cleanup() { refs = 0; }
+        ~DivSeg() override = default;
     };
 
 }

@@ -157,7 +157,7 @@ namespace manager{
 
 
     template<class T>
-    T Link<T>::get_instance(Table& table) { //todo
+    T Link<T>::get_instance(Table& table) {
         if(this->e_id == Value_ID){
             return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
         } else {
@@ -197,20 +197,6 @@ namespace manager{
     std::vector<T> Array<T>::operator()(Table&, size_t t_begin, size_t t_end) { //todo
 
         return std::vector<T>();
-    }
-
-
-
-    template<class T>
-    DivSeg<T>::DivSeg() {
-
-    }
-
-
-
-    template<class T>
-    void DivSeg<T>::cleanup() {
-
     }
 
 

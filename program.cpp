@@ -74,6 +74,8 @@ namespace manager{
             throw std::invalid_argument("Program can only refuse a DivSeg");
 
         auto mark = std::find(entities.begin(), entities.end(), ptr);
+        (*mark)->decrement_refs();
+        if(!(*mark)->refs_count()) delete ptr;
         entities.erase(mark);
     }
 
