@@ -19,7 +19,7 @@ namespace manager{
 
     int Program::run() {
         int rc;
-        while((rc = answer(menus, menu)){
+        while((rc = answer(menus, menu))){
             (this->*fptr[rc])(table);
         }
         std::cout << "That's all. Bye!" << std::endl;
@@ -42,13 +42,12 @@ namespace manager{
     }
 
 
-    template<class T>
-    Entity* Program::request_memory(size_t t_amount, Entity_ID t_id) noexcept(false) {
+    Entity* Program::request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id) noexcept(false) {
         Unit rc;
         Entity* ptr = nullptr;
         try{
-            rc = table.allocate_memory(t_amount, t_id);
-            ptr = Entity::create_Entity<T>(t_id);
+            rc = table.allocate_memory(t_amount, e_id);
+            ptr = Entity::generate_Entity(e_id, t_id);
             ptr->set_pos(rc);
         }
         catch(...){
@@ -69,12 +68,11 @@ namespace manager{
     }
 
 
-    template<class T>
+
     void Program::refuse_divseg(Entity* ptr) noexcept(false) {
-        if(typeid(*ptr) != typeid(DivSeg<T>))
-            throw(std::invalid_argument("not a divseg argument"));
-        auto dptr = dynamic_cast<DivSeg<T>*>(ptr);
-        dptr->erase_one(this);
+        if( ptr->get_entity_id() != DivSeg_ID)
+            throw std::invalid_argument("Program can only refuse a DivSeg");
+
         auto mark = std::find(entities.begin(), entities.end(), ptr);
         entities.erase(mark);
     }
@@ -123,7 +121,7 @@ namespace manager{
         this->table  = prog.table;
         auto it = prog.entities.begin();  // this is a const iterator
         for(; it != prog.entities.end(); ++it){
-            this->entities.push_back(Entity::create_Entity<>( (*it)->get_id()) );
+            this->entities.push_back(Entity::generate_Entity((*it)->get_entity_id(),  (*it)->get_type_id()));
         }
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;

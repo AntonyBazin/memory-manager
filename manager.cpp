@@ -63,19 +63,19 @@ namespace manager{
 
 
 
-    void Entity::set_pos(Unit un) {
+    void Entity::set_pos(Unit un) noexcept {
         position = un;
     }
 
 
 
-    size_t Entity::memory_used() const {
+    size_t Entity::memory_used() const noexcept{
         return position.size;
     }
 
 
 
-    Unit Entity::get_pos() const{
+    Unit Entity::get_pos() const noexcept{
         return position;
     }
 
@@ -125,7 +125,7 @@ namespace manager{
     template<class T>
     Link<T>::Link(const Entity* val) {
         Entity* ent;
-        switch(ptr->get_id()){
+        switch(ptr->get_entity_id()){
             case Value_ID:
                 ent = dynamic_cast<Value<T>*>(val);
                 break;
@@ -138,7 +138,7 @@ namespace manager{
             default:
                 ent = dynamic_cast<Link<T>*>(val)->get_core_entity();
 
-                switch(ptr->get_id()) {
+                switch(ptr->get_entity_id()) {
                     case Value_ID:
                         ent = dynamic_cast<Value<T> *>(val);
                         break;
@@ -158,7 +158,7 @@ namespace manager{
 
     template<class T>
     T Link<T>::get_instance(Table& table) { //todo
-        if(this->id == Value_ID){
+        if(this->e_id == Value_ID){
             return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
         } else {
             return dynamic_cast<DivSeg<T>*>(ptr)->get_instance(table);
@@ -169,7 +169,7 @@ namespace manager{
 
     template<class T> // todo
     void Link<T>::set_instance(Table& table, T new_inst) noexcept(false) {
-        if(this->id == Value_ID){
+        if(this->e_id == Value_ID){
             dynamic_cast<Value<T>*>(ptr)->set_instance(table, new_inst);
         } else{
             dynamic_cast<DivSeg<T>*>(ptr)->set_instance(table, new_inst);
@@ -180,11 +180,11 @@ namespace manager{
 
     template<class T>
     Entity *Link<T>::get_core_entity() {
-        if(ptr->get_id() != Link_ID){
+        if(ptr->get_entity_id() != Link_ID){
             return ptr;
         } else{
             Entity* ent = ptr;
-            while(ent->get_id() == Link_ID){  // getting out of all links
+            while(ent->get_entity_id() == Link_ID){  // getting out of all links
                 ent = dynamic_cast<Link<T>*>(ent)->ptr;
             }
             return ent;
@@ -194,9 +194,24 @@ namespace manager{
 
 
     template<class T>
-    std::vector<T> Array<T>::operator()(Table &, size_t t_begin, size_t t_end) { //todo
+    std::vector<T> Array<T>::operator()(Table&, size_t t_begin, size_t t_end) { //todo
 
         return std::vector<T>();
     }
+
+
+
+    template<class T>
+    DivSeg<T>::DivSeg() {
+
+    }
+
+
+
+    template<class T>
+    void DivSeg<T>::cleanup() {
+
+    }
+
 
 }

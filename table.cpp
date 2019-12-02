@@ -9,10 +9,9 @@ namespace manager{
 
 
     Table::Table() {
-        current_size = 0;
         memory.insert(memory.begin(), max_size, '\0');
         free_blocks = {};
-        free_blocks.emplace_back(0, max_size, false);
+        free_blocks.emplace_back(0, max_size);
     }
 
 
@@ -50,7 +49,7 @@ namespace manager{
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_strt](Unit un) -> bool { return un.starter_address > t_strt; });
-        Unit newcomer(t_strt, t_size, false);
+        Unit newcomer(t_strt, t_size);
         free_blocks.insert(mark, newcomer);
     }
 
@@ -78,7 +77,7 @@ namespace manager{
             mark->size -= t_size;
         }
 
-        Unit pos(strt, t_size, true);
+        Unit pos(strt, t_size);
         return pos;
     }
 

@@ -24,41 +24,45 @@ namespace manager{
     template<class T> class Value;
     template<class T>class DivSeg;
 
-    enum Entity_ID{ Value_ID = 0, Array_ID = 1, DivSeg_ID = 2, Link_ID = 3 };
+    enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID };
     enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE };
 
 
     struct Unit{
         size_t starter_address;
         size_t size;
-        bool active;
 
-        Unit(size_t t_strt, size_t t_size, bool t_actv) :
-        starter_address(t_strt), size(t_size), active(t_actv){};
+        Unit(size_t t_strt, size_t t_size) :
+        starter_address(t_strt), size(t_size){};
 
-        Unit() : starter_address(0), size(0), active(false) {};
+        Unit() : starter_address(0), size(0) {};
     };
 
 
 
     class Entity{
     protected:
-        Entity_ID id;
+        Entity_ID e_id;
+        Type_ID t_id;
         std::string name;
         Unit position;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
-        void set_pos(Unit un);
-        Unit get_pos() const;
-        explicit Entity(Unit un, Entity_ID t_id, std::string nm  = "default_name") :
-        position(un),
-        id(t_id),
-        name(std::move(nm)) {};
-        size_t memory_used() const;
-        virtual ~Entity() = default;
-        Entity_ID get_id() const { return id; }
+        void set_pos(Unit un) noexcept;
+        Unit get_pos() const noexcept;
+        explicit Entity(Unit un, Entity_ID ent_id, Type_ID type_id, std::string nm  = "default_name") :
+                position(un),
+                e_id(ent_id),
+                t_id(type_id),
+                name(std::move(nm)) {};
+        size_t memory_used() const noexcept;
+        Entity_ID get_entity_id() const { return e_id; }
+        Type_ID get_type_id() const { return t_id; }
+
         static Entity* generate_Entity(Entity_ID id, Type_ID type) noexcept(false);
         template<class T> static Entity* create_Entity(Entity_ID id) noexcept(false);
+
+        virtual ~Entity() = default;
     };
 
 
@@ -68,7 +72,6 @@ namespace manager{
         static const int max_size = 300;
         static std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
-
     public:
         Table();
         void defragmentation();   // obvious
@@ -92,7 +95,7 @@ namespace manager{
         static std::string menu[menus];
 
         size_t get_memory_used() const;   // calculate memory usage
-        template<class T> Entity* request_memory(size_t t_amount, Entity_ID t_id) noexcept(false);
+        Entity* request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id) noexcept(false);
         void refuse_divseg(Entity*) noexcept(false);
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
@@ -105,9 +108,10 @@ namespace manager{
         int d_show_all(Table&);
         int d_show_divsegs(Table&);
         int d_calc_memory(Table&);
-
-        int (Program::*fptr[7])(Table&);
         int answer(int menus_count, std::string menus[]);
+        int (Program::*fptr[7])(Table&);
+
+        template<class T> friend class DivSeg;
 
     public:
         Program() = delete;
@@ -123,8 +127,8 @@ namespace manager{
 
     class App{
     private:
-        size_t programs_count;
-        Program* active_programs;
+        std::vector<Program> programs;
+        std::vector<Divseg<T>> segments;
     public:
         std::ostream& show_all(std::ostream&);
         std::ostream& print_prog_memory(std::ostream&, size_t t_index);
@@ -182,17 +186,17 @@ namespace manager{
 
 
     template<class T>
-    class DivSeg : public Entity{
+    class DivSeg : public Array<T>{
     private:
-        std::vector<Program*> programs;
+        std::vector<Program> programs;
+        size_t refs;  // to mark as free if
     protected:
-        std::ostream& show(std::ostream&) const;
+        std::ostream& show(std::ostream&) const override;
     public:
+        size_t refs_count() { return refs; }
         DivSeg();
-        void free_program(Program*);
-        void erase_one(Program*);
         void cleanup();  // delete all program links
-        static Entity* create_DivSeg(Entity_ID id) noexcept(false);
+        void erase(Program&);
     };
 
 }
