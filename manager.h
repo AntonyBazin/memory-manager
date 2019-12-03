@@ -60,13 +60,12 @@ namespace manager{
         size_t memory_used() const noexcept;
         Entity_ID get_entity_id() const { return e_id; }
         Type_ID get_type_id() const { return t_id; }
-        size_t refs_count() noexcept { return refs; }
+        size_t refs_count() const noexcept { return refs; }
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
-
+        void set_name(std::string t_name) noexcept { name = t_name; }
         static Entity* generate_Entity(Entity_ID id, Type_ID type) noexcept(false);
         template<class T> static Entity* create_Entity(Entity_ID id) noexcept(false);
-
         virtual ~Entity() = default;
     };
 
@@ -95,13 +94,11 @@ namespace manager{
         std::string file_address;    // file address
         const size_t memory_quota;   // max amount of memory available to this program
         Table table;  // a program has no meaning w/o a table to store data in
-
-        static const int menus = 8;
-        static std::string menu[menus];
+        static const int menus;  // menus amount
+        static std::string menu[];  // menus
 
         size_t get_memory_used() const;   // calculate memory usage
         Entity* request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id) noexcept(false);
-        void refuse_divseg(Entity*) noexcept(false);
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
         std::ostream& show_all(std::ostream&) const;
@@ -151,7 +148,6 @@ namespace manager{
         T get_instance(Table&);
         void set_instance(Table&, T new_inst) noexcept(false);
         Entity* create_link() const;
-        static Entity* create_Value(Entity_ID id) noexcept(false);
         ~Value() override = default;
     };
 
@@ -168,7 +164,6 @@ namespace manager{
         T get_instance(Table&);
         void set_instance(Table&, T new_inst);
         Entity* get_core_entity();
-        static Entity* create_Link(Entity_ID id) noexcept(false);
     };
 
 
@@ -183,7 +178,6 @@ namespace manager{
         int operator [](size_t t_index) const;
         std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
         void set_array(Table&, std::vector<T>);
-        static Entity* create_Array(Entity_ID id) noexcept(false);
         ~Array() override = default;
     };
 

@@ -14,7 +14,7 @@ namespace manager{
                                    "4. Show all memory info",
                                    "5. Show div segments",
                                    "6. Calculate total memory used"};
-
+    const int Program::menus = sizeof(menu)/sizeof(menu[0]);
 
 
     int Program::run() {
@@ -54,6 +54,7 @@ namespace manager{
             throw;
         }
         entities.emplace_back(ptr);
+        ptr->increment_refs();
         return ptr;
     }
 
@@ -61,22 +62,13 @@ namespace manager{
 
     void Program::free_entity(size_t t_index) noexcept(false) {
         Unit pos = entities.at(t_index)->get_pos();
-        table.mark_free(pos.starter_address, pos.size);
-        if(entities.at(t_index)) delete entities.at(t_index);
         auto mark = entities.begin() + t_index;
-        entities.erase(mark);
-    }
-
-
-
-    void Program::refuse_divseg(Entity* ptr) noexcept(false) {
-        if( ptr->get_entity_id() != DivSeg_ID)
-            throw std::invalid_argument("Program can only refuse a DivSeg");
-
-        auto mark = std::find(entities.begin(), entities.end(), ptr);
         (*mark)->decrement_refs();
-        if(!(*mark)->refs_count()) delete ptr;
-        entities.erase(mark);
+        if(!(*mark)->refs_count()){  // check whether entity is now free
+            delete (*mark);  // if it has no refs any more than delete it
+            table.mark_free(pos.starter_address, pos.size); // and mark as free
+        }
+        entities.erase(mark); // delete from this programs entities anyway
     }
 
 
@@ -95,8 +87,11 @@ namespace manager{
         auto vec_it = entities.begin();
         for(; vec_it != entities.end(); ++vec_it){
             Unit current_pos = (*vec_it)->get_pos();
-            table.mark_free(current_pos.starter_address, current_pos.size);
-            delete (*vec_it);
+            (*vec_it)->decrement_refs();
+            if(!(*vec_it)->refs_count()){
+                table.mark_free(current_pos.starter_address, current_pos.size);
+                delete (*vec_it);
+            }
         }
         entities.clear();
     }
@@ -118,11 +113,11 @@ namespace manager{
 
 
 
-    Program::Program(const Program& prog) : memory_quota(prog.memory_quota) {
-        this->file_address = prog.file_address;
-        this->table  = prog.table;
-        auto it = prog.entities.begin();  // this is a const iterator
-        for(; it != prog.entities.end(); ++it){
+    Program::Program(const Program& program) : memory_quota(program.memory_quota) {
+        this->file_address = program.file_address;
+        this->table  = program.table;
+        auto it = program.entities.begin();  // this is a const iterator
+        for(; it != program.entities.end(); ++it){
             this->entities.push_back(Entity::generate_Entity((*it)->get_entity_id(),  (*it)->get_type_id()));
         }
         fptr[0] = nullptr;
@@ -136,14 +131,14 @@ namespace manager{
 
 
 
-    Program::Program(Program&& prog) noexcept : memory_quota(prog.memory_quota){
-        this->file_address = prog.file_address;
-        this->table  = prog.table;
-        auto it = prog.entities.begin();  // this is a const iterator
-        for(; it != prog.entities.end(); ++it){
+    Program::Program(Program&& program) noexcept : memory_quota(program.memory_quota){
+        this->file_address = program.file_address;
+        this->table  = program.table;
+        auto it = program.entities.begin();  // this is a const iterator
+        for(; it != program.entities.end(); ++it){
             this->entities.push_back(*it);
         }
-        prog.entities.clear();
+        program.entities.clear();
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
         fptr[2] = &Program::d_free_memory;
