@@ -52,7 +52,8 @@ namespace manager{
     public:
         void set_pos(Unit un) noexcept { position = un; };
         void set_name(std::string t_name) noexcept { name = std::move(t_name); }
-        Unit get_pos() const noexcept;
+        Unit get_pos() const noexcept { return position; };
+        size_t memory_used() const noexcept { return  position.size; };
         /*explicit Entity(Unit un, Entity_ID ent_id,
                 Type_ID type_id, std::string nm  = "default_name") :
                 position(un),
@@ -67,7 +68,7 @@ namespace manager{
                    name({}),
                    refs(0) {}
 
-        size_t memory_used() const noexcept;
+
         Entity_ID get_entity_id() const { return e_id; }
         Type_ID get_type_id() const { return t_id; }
         const std::string& get_name() const { return name; }
@@ -76,12 +77,13 @@ namespace manager{
         void decrement_refs() noexcept { --refs; }
 
         static Entity* generate_Entity(Entity_ID e_id,
-                Type_ID type, const std::string& t_name = "def") noexcept(false);
+                Type_ID type,
+                const std::string& t_name = "def") noexcept(false);
 
         template<class T> static Entity* create_Entity(Entity_ID id,
                 std::string t_name = "def") noexcept(false);
 
-        Entity* create_link() const;
+        template <class T> Entity* create_link(const std::string& t_name = "def_lnk") const;
         virtual ~Entity() = default;
     };
 
@@ -98,7 +100,9 @@ namespace manager{
         void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
         Unit allocate_memory(size_t t_size, Entity_ID id);
         std::vector<unsigned char> read_bytes(size_t t_strt, size_t t_size) noexcept(false);
-        void write(size_t t_strt, size_t t_size, std::vector<unsigned char>t_vec) noexcept(false);
+        void write(size_t t_strt,
+                size_t t_size,
+                std::vector<unsigned char>t_vec) noexcept(false);
         ~Table() = default;
     };
 
@@ -179,7 +183,7 @@ namespace manager{
     public:
         explicit Link(const Entity*);
         T get_instance(Table&);
-        void set_instance(Table&, T new_inst);
+        void set_instance(Table&, T new_inst, size_t index = 0);
         Entity* get_core_entity();
     };
 
@@ -191,8 +195,9 @@ namespace manager{
         std::ostream& show(std::ostream&) const;
     public:
         Array() = default;
-        int& operator [](size_t t_index);
-        int operator [](size_t t_index) const;
+        void set_single_instance(size_t where, T what);
+        T& operator [](size_t t_index);
+        T operator [](size_t t_index) const;
         std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
         void set_array(Table&, std::vector<T>);
         ~Array() override = default;
@@ -202,12 +207,11 @@ namespace manager{
 
     template<class T>
     class DivSeg : public Entity{
-    private:
-        std::vector<Program> programs;
     protected:
         std::ostream& show(std::ostream&) const override;
     public:
         DivSeg() = default;
+        void set_single_instance(size_t where, T what);
         void cleanup() { refs = 0; }
         ~DivSeg() override = default;
     };

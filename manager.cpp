@@ -70,22 +70,16 @@ namespace manager{
     }
 
 
-
-    size_t Entity::memory_used() const noexcept{
-        return position.size;
+    template<class T>
+    Entity *Entity::create_link(const std::string& t_name) const {
+        Entity* ent = Entity::generate_Entity(Link_ID, this->t_id, t_name);
+        ent->position = this->position; // can't simply use new Link(this) bc of templates
+        if(ent->refs) ent->refs = 0;
+        auto lnk = dynamic_cast<Link<T>*>(ent);
+        lnk->ptr = this;
+        return ent;
     }
 
-
-
-    Unit Entity::get_pos() const noexcept{
-        return position;
-    }
-
-    Entity *Entity::create_link() const {
-
-
-        return nullptr;
-    }
 
 
     template<class T>
@@ -101,7 +95,7 @@ namespace manager{
 
 
     template<class T>
-    void Value<T>::set_instance(Table& table, T new_inst) noexcept(false) {
+    void Value<T>::set_instance(Table& table, const T new_inst) noexcept(false) {
         size_t size = sizeof(T);
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&new_inst);
@@ -157,21 +151,33 @@ namespace manager{
 
     template<class T>
     T Link<T>::get_instance(Table& table) {
-        if(this->e_id == Value_ID){
-            return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
-        } else {
-            return dynamic_cast<DivSeg<T>*>(ptr)->get_instance(table);
+        auto cr = dynamic_cast<Link<T>*>(ptr)->get_core_entity();
+        switch(cr->get_entity_id()) {
+            case Value_ID:
+                return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
+            case Array_ID:
+                return dynamic_cast<Array<T>*>(ptr)->get_instance(table);
+            case DivSeg_ID:
+                return dynamic_cast<DivSeg<T>*>(ptr)->get_instance(table);
+            default:
+                throw std::domain_error("unexpected core entity");
         }
     }
 
 
 
-    template<class T> // todo
-    void Link<T>::set_instance(Table& table, T new_inst) noexcept(false) {
-        if(this->e_id == Value_ID){
-            dynamic_cast<Value<T>*>(ptr)->set_instance(table, new_inst);
-        } else{
-            dynamic_cast<DivSeg<T>*>(ptr)->set_instance(table, new_inst);
+    template<class T>
+    void Link<T>::set_instance(Table& table, T new_inst, size_t index) noexcept(false) {
+        auto core = dynamic_cast<Link<T>*>(ptr)->get_core_entity();
+        switch(core->get_entity_id()) {
+            case Value_ID:
+                (dynamic_cast<Value<T>*>(core))->set_instance(table, new_inst);
+            case Array_ID:
+                (dynamic_cast<Array<T>*>(core))->set_single_instance(index, new_inst);
+            case DivSeg_ID:
+                (dynamic_cast<DivSeg<T>*>(core))->set_single_instance(index, new_inst);
+            default:
+                throw std::domain_error("unexpected core entity");
         }
     }
 
@@ -179,12 +185,12 @@ namespace manager{
 
     template<class T>
     Entity *Link<T>::get_core_entity() {
-        if(ptr->get_entity_id() != Link_ID){
+        if(ptr->get_entity_id() != Link_ID){ // core entity is something that is not a link
             return ptr;
         } else{
             Entity* ent = ptr;
             while(ent->get_entity_id() == Link_ID){  // getting out of all links
-                ent = dynamic_cast<Link<T>*>(ent)->ptr;
+                ent = (dynamic_cast<Link<T>*>(ent))->ptr;
             }
             return ent;
         }
