@@ -42,12 +42,14 @@ namespace manager{
     }
 
 
-    Entity* Program::request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id) noexcept(false) {
+    Entity* Program::request_memory(size_t t_amount, Type_ID t_id,
+            Entity_ID e_id, const std::string& t_name) noexcept(false) {
+
         Unit rc;
         Entity* ptr = nullptr;
         try{
             rc = table.allocate_memory(t_amount, e_id);
-            ptr = Entity::generate_Entity(e_id, t_id);
+            ptr = Entity::generate_Entity(e_id, t_id, t_name);
             ptr->set_pos(rc);
         }
         catch(...){
@@ -116,9 +118,10 @@ namespace manager{
     Program::Program(const Program& program) : memory_quota(program.memory_quota) {
         this->file_address = program.file_address;
         this->table  = program.table;
-        auto it = program.entities.begin();  // this is a const iterator
-        for(; it != program.entities.end(); ++it){
-            this->entities.push_back(Entity::generate_Entity((*it)->get_entity_id(),  (*it)->get_type_id()));
+        auto it = program.entities.cbegin();  // this is a const iterator
+        for(; it != program.entities.cend(); ++it){
+            this->entities.push_back(Entity::generate_Entity((*it)->get_entity_id(),
+                    (*it)->get_type_id(), (*it)->get_name()));
         }
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
@@ -134,10 +137,13 @@ namespace manager{
     Program::Program(Program&& program) noexcept : memory_quota(program.memory_quota){
         this->file_address = program.file_address;
         this->table  = program.table;
-        auto it = program.entities.begin();  // this is a const iterator
+        std::move(program.entities.begin(),
+                program.entities.end(),
+                this->entities.begin());
+        /*auto it = program.entities.begin();  // this is a const iterator
         for(; it != program.entities.end(); ++it){
             this->entities.push_back(*it);
-        }
+        }*/
         program.entities.clear();
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;

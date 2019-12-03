@@ -7,29 +7,36 @@
 namespace manager{
 
 
-    Entity *Entity::generate_Entity(Entity_ID id, Type_ID type) noexcept(false) {
+    Entity *Entity::generate_Entity(Entity_ID e_id, Type_ID type, const std::string& t_name) noexcept(false) {
         Entity* ptr;
         switch(type){
             case CHAR:
-                ptr = Entity::create_Entity<char>(id);
+                ptr = Entity::create_Entity<char>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             case INT:
-                ptr = Entity::create_Entity<int>(id);
+                ptr = Entity::create_Entity<int>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             case LONG:
-                ptr = Entity::create_Entity<long>(id);
+                ptr = Entity::create_Entity<long>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             case LONGLONG:
-                ptr = Entity::create_Entity<long long>(id);
+                ptr = Entity::create_Entity<long long>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             case FLOAT:
-                ptr = Entity::create_Entity<float>(id);
+                ptr = Entity::create_Entity<float>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             case DOUBLE:
-                ptr = Entity::create_Entity<double>(id);
+                ptr = Entity::create_Entity<double>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             case LONGDOUBLE:
-                ptr = Entity::create_Entity<long double>(id);
+                ptr = Entity::create_Entity<long double>(e_id, t_name);
+                ptr->t_id = type;
                 break;
             default:
                 throw std::domain_error("Unexpected type id");
@@ -40,7 +47,7 @@ namespace manager{
 
 
     template<class T>
-    Entity *Entity::create_Entity(Entity_ID id) noexcept(false) {
+    Entity *Entity::create_Entity(Entity_ID id, std::string t_name) noexcept(false) {
         Entity* ptr;
         switch(id){
             case Value_ID:
@@ -58,13 +65,8 @@ namespace manager{
             default:
                 throw std::domain_error("unknown entity id");
         }
+        ptr->set_name(std::move(t_name));
         return ptr;
-    }
-
-
-
-    void Entity::set_pos(Unit un) noexcept {
-        position = un;
     }
 
 
@@ -79,6 +81,11 @@ namespace manager{
         return position;
     }
 
+    Entity *Entity::create_link() const {
+
+
+        return nullptr;
+    }
 
 
     template<class T>
@@ -110,14 +117,6 @@ namespace manager{
     template<class T>
     size_t Value<T>::get_size() {
         return sizeof(T);
-    }
-
-
-
-    template<class T>
-    Entity* Value<T>::create_link() const {
-        Entity *ptr = new Link<T>(*this);
-        return ptr;
     }
 
 

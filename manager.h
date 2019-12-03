@@ -6,6 +6,7 @@
 #define MEMORY_MANAGER_MANAGER_H
 
 #include <algorithm>
+#include <utility>  // for std::move to move objects such as string's
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -24,8 +25,8 @@ namespace manager{
     template<class T> class Value;
     template<class T>class DivSeg;
 
-    enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID };
-    enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE };
+    enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID, E_ERR };
+    enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE, T_ERR };
 
 
     struct Unit{
@@ -49,23 +50,38 @@ namespace manager{
         size_t refs;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
-        void set_pos(Unit un) noexcept;
+        void set_pos(Unit un) noexcept { position = un; };
+        void set_name(std::string t_name) noexcept { name = std::move(t_name); }
         Unit get_pos() const noexcept;
-        explicit Entity(Unit un, Entity_ID ent_id, Type_ID type_id, std::string nm  = "default_name") :
+        /*explicit Entity(Unit un, Entity_ID ent_id,
+                Type_ID type_id, std::string nm  = "default_name") :
                 position(un),
                 e_id(ent_id),
                 t_id(type_id),
                 name(std::move(nm)),
-                refs(0) {};
+                refs(0) {};*/
+
+        Entity() : position({}),
+                   e_id(E_ERR),
+                   t_id(T_ERR),
+                   name({}),
+                   refs(0) {}
+
         size_t memory_used() const noexcept;
         Entity_ID get_entity_id() const { return e_id; }
         Type_ID get_type_id() const { return t_id; }
+        const std::string& get_name() const { return name; }
         size_t refs_count() const noexcept { return refs; }
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
-        void set_name(std::string t_name) noexcept { name = t_name; }
-        static Entity* generate_Entity(Entity_ID id, Type_ID type) noexcept(false);
-        template<class T> static Entity* create_Entity(Entity_ID id) noexcept(false);
+
+        static Entity* generate_Entity(Entity_ID e_id,
+                Type_ID type, const std::string& t_name = "def") noexcept(false);
+
+        template<class T> static Entity* create_Entity(Entity_ID id,
+                std::string t_name = "def") noexcept(false);
+
+        Entity* create_link() const;
         virtual ~Entity() = default;
     };
 
@@ -98,7 +114,9 @@ namespace manager{
         static std::string menu[];  // menus
 
         size_t get_memory_used() const;   // calculate memory usage
-        Entity* request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id) noexcept(false);
+        Entity* request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id,
+                const std::string& t_name) noexcept(false);
+
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
         std::ostream& show_all(std::ostream&) const;
@@ -147,7 +165,6 @@ namespace manager{
         size_t get_size();
         T get_instance(Table&);
         void set_instance(Table&, T new_inst) noexcept(false);
-        Entity* create_link() const;
         ~Value() override = default;
     };
 
