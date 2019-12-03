@@ -99,7 +99,10 @@ namespace manager{
         void defragmentation();   // obvious
         void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
         Unit allocate_memory(size_t t_size, Entity_ID id);
-        std::vector<unsigned char> read_bytes(size_t t_strt, size_t t_size) noexcept(false);
+
+        std::vector<unsigned char> read_bytes(size_t t_strt,
+                size_t t_size) const noexcept(false);
+
         void write(size_t t_strt,
                 size_t t_size,
                 std::vector<unsigned char>t_vec) noexcept(false);
@@ -193,27 +196,26 @@ namespace manager{
     class Array : public Entity{
     protected:
         std::ostream& show(std::ostream&) const;
+
     public:
         Array() = default;
-        void set_single_instance(size_t where, T what);
-        T& operator [](size_t t_index);
-        T operator [](size_t t_index) const;
+        T get_single_instance(Table&, size_t t_begin) const;
+        void set_single_instance(Table&, size_t where, T what);
         std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
-        void set_array(Table&, std::vector<T>);
         ~Array() override = default;
     };
 
 
 
-    template<class T>
-    class DivSeg : public Entity{
+    template<class T> //todo think why it is not an array
+    class DivSeg : public Array<T>{
     protected:
+        std::vector<Program> programs;
         std::ostream& show(std::ostream&) const override;
     public:
         DivSeg() = default;
-        void set_single_instance(size_t where, T what);
-        void cleanup() { refs = 0; }
-        ~DivSeg() override = default;
+        void cleanup() { this->refs = 0; } //todo
+        ~DivSeg() = default;
     };
 
 }

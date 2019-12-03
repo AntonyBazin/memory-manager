@@ -84,12 +84,19 @@ namespace manager{
 
     template<class T>
     T Value<T>::get_instance(Table& table) {
-        unsigned int v = 0;
+        T v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
-        for(size_t i = 0; i < position.size; ++i){
-            v = v | (rc[i] << ((position.size - 1)*8 - i*8));
+        for(size_t i = 0; i < sizeof(T); ++i){
+            v = v | (rc[i] << ((sizeof(T) - 1)*8 - i*8));
         }
         return v;
+    }
+
+
+
+    template<class T>
+    size_t Value<T>::get_size() {
+        return sizeof(T);
     }
 
 
@@ -104,13 +111,6 @@ namespace manager{
         }
         std::vector<unsigned char> v(c, c + size);
         table.write(position.starter_address, position.size, v);
-    }
-
-
-
-    template<class T>
-    size_t Value<T>::get_size() {
-        return sizeof(T);
     }
 
 
@@ -199,10 +199,43 @@ namespace manager{
 
 
     template<class T>
-    std::vector<T> Array<T>::operator()(Table&, size_t t_begin, size_t t_end) { //todo
-
-        return std::vector<T>();
+    void Array<T>::set_single_instance(Table& table, size_t where, T what) {
+        size_t size = sizeof(T);
+        unsigned char c[size];
+        auto p = reinterpret_cast<unsigned char *>(&what);
+        for(size_t i = 0; i < size; ++i){
+            c[size - 1 - i] = p[i];
+        }
+        std::vector<unsigned char> v(c, c + size);
+        table.write(position.starter_address + (size*where), position.size, v);
     }
+
+
+
+    template<class T>
+    T Array<T>::get_single_instance(Table& table, size_t t_index) const{
+        size_t size = sizeof(T);
+        T v = 0;
+        auto rc = table.read_bytes(position.starter_address + (t_index*size), size);
+
+        for(size_t i = 0; i < size; ++i){
+            v = v | (rc[i] << ((size - 1)*8 - i*8));
+        }
+        return v;
+    }
+
+
+
+    template<class T>
+    std::vector<T> Array<T>::operator()(Table& table, size_t t_begin, size_t t_end) {
+        std::vector<T> vec;
+        for(size_t i = t_begin; i < t_end; ++i){
+            vec.push_back(get_single_instance(table, i));
+        }
+        return vec;
+    }
+
+
 
 
 }

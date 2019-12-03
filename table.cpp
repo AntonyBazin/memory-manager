@@ -83,7 +83,7 @@ namespace manager{
 
 
 
-    std::vector<unsigned char> Table::read_bytes(size_t t_strt, size_t t_size) noexcept(false) {
+    std::vector<unsigned char> Table::read_bytes(size_t t_strt, size_t t_size) const noexcept(false) {
         if(t_strt < 0 || t_size <= 0)
             throw std::invalid_argument("argument below zero");
         if(t_strt > max_size || t_size > max_size)
