@@ -49,6 +49,7 @@ namespace manager{
     template<class T>
     Entity *Entity::create_Entity(Entity_ID id, std::string t_name) noexcept(false) {
         Entity* ptr;
+        DivSeg<T>* d_ptr = nullptr;
         switch(id){
             case Value_ID:
                 ptr = new Value<T>;
@@ -78,6 +79,22 @@ namespace manager{
         auto lnk = dynamic_cast<Link<T>*>(ent);
         lnk->ptr = this;
         return ent;
+    }
+
+
+
+    void Entity::add_program(Program &pr) noexcept(false) {
+        if(this->e_id != DivSeg_ID)
+            throw std::domain_error("Cannot add a program to a non-DivSeg element");
+        programs.push_back(pr);
+    }
+
+
+
+    void Entity::erase_program(Program &pr) noexcept(false) {
+        if(this->e_id != DivSeg_ID)
+            throw std::domain_error("Cannot erase a program of a non-DivSeg element");
+        programs.erase(std::find(programs.begin(), programs.end(), pr));
     }
 
 

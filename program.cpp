@@ -155,4 +155,40 @@ namespace manager{
     }
 
 
+
+    void Program::add_existing_DivSeg(Entity *ent) noexcept(false){
+        if(ent->get_entity_id() != DivSeg_ID)
+            throw std::domain_error("received a non-DivSeg on adding a DivSeg");
+        ent->add_program(*this);
+        ent->increment_refs();
+        entities.push_back(ent);
+    }
+
+
+
+    void Program::refuse_div_seg(Entity* ent) noexcept(false) {
+        if(ent->get_entity_id() != DivSeg_ID)
+            throw std::domain_error("received a non-DivSeg on refusing a DivSeg");
+        ent->erase_program(*this);
+        ent->decrement_refs();
+        if(!(ent->refs_count())){
+            delete ent;
+        }
+        entities.erase(std::find(entities.begin(), entities.end(), ent));
+    }
+
+
+
+    std::vector<Entity *> Program::get_div_segs() const noexcept {
+        auto iter = entities.begin();
+        std::vector<Entity*> res = {};
+        for(; iter != entities.end(); ++iter){
+            if((*iter)->get_entity_id() == DivSeg_ID){
+                res.push_back((*iter));
+            }
+        }
+        return res;
+    }
+
+
 }

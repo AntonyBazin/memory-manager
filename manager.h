@@ -48,6 +48,7 @@ namespace manager{
         std::string name;
         Unit position;
         size_t refs;
+        std::vector<Program> programs;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
         void set_pos(Unit un) noexcept { position = un; };
@@ -66,7 +67,8 @@ namespace manager{
                    e_id(E_ERR),
                    t_id(T_ERR),
                    name({}),
-                   refs(0) {}
+                   refs(0),
+                   programs({}) {}
 
 
         Entity_ID get_entity_id() const { return e_id; }
@@ -75,6 +77,8 @@ namespace manager{
         size_t refs_count() const noexcept { return refs; }
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
+        void add_program(Program& pr) noexcept(false); //todo
+        void erase_program(Program& pr) noexcept(false);
 
         static Entity* generate_Entity(Entity_ID e_id,
                 Type_ID type,
@@ -126,8 +130,11 @@ namespace manager{
 
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
+        void add_existing_DivSeg(Entity*) noexcept(false);
+        void refuse_div_seg(Entity*) noexcept(false);
+        std::vector<Entity*> get_div_segs() const noexcept;
+
         std::ostream& show_all(std::ostream&) const;
-        std::ostream& show_divsegs(std::ostream&) const;
 
         int d_request_memory(Table&);
         int d_free_memory(Table&);
@@ -207,14 +214,13 @@ namespace manager{
 
 
 
-    template<class T> //todo think why it is not an array
+    template<class T>
     class DivSeg : public Array<T>{
     protected:
-        std::vector<Program> programs;
         std::ostream& show(std::ostream&) const override;
     public:
         DivSeg() = default;
-        void cleanup() { this->refs = 0; } //todo
+        void nullify_programs() { this->programs = {}; }
         ~DivSeg() = default;
     };
 
