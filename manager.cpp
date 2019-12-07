@@ -60,7 +60,7 @@ namespace manager{
 
 
 
-    long long Value::get_instance(Table& table) const {
+    long long Value::get_instance(const Table& table) const {
         long long v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
         for(size_t i = 0; i < get_size(); ++i){
@@ -96,9 +96,7 @@ namespace manager{
         return lnk;
     }
 
-
-
-    std::ostream& Value::show(Table& table, std::ostream& os) const {
+    std::ostream& Value::show(const Table& table, std::ostream& os) const {
         os << get_instance(table);
         return os;
     }
@@ -139,7 +137,7 @@ namespace manager{
 
 
 
-    long long Link::get_instance(Table& table) const{
+    long long Link::get_instance(const Table& table) const{
         auto cr = get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
@@ -193,7 +191,7 @@ namespace manager{
 
 
 
-    std::ostream& Link::show(Table& table, std::ostream& os) const {
+    std::ostream& Link::show(const Table& table, std::ostream& os) const {
         os << get_instance(table);
         return os;
     }
@@ -223,7 +221,7 @@ namespace manager{
 
 
 
-    long long Array::get_single_instance(Table& table, size_t t_index) const{
+    long long Array::get_single_instance(const Table& table, size_t t_index) const{
         size_t size = get_size();
         long long v = 0;
         auto rc = table.read_bytes(position.starter_address + (t_index*size), size);
@@ -236,7 +234,7 @@ namespace manager{
 
 
 
-    std::vector<long long> Array::operator()(Table& table, size_t t_begin, size_t t_end) {
+    std::vector<long long> Array::operator()(const Table& table, size_t t_begin, size_t t_end) {
         std::vector<long long> vec;
         for(size_t i = t_begin; i < t_end; ++i){
             vec.push_back(get_single_instance(table, i));
@@ -260,7 +258,7 @@ namespace manager{
 
 
 
-    std::ostream& Array::show(Table& table, std::ostream& os) const {
+    std::ostream& Array::show(const Table& table, std::ostream& os) const {
         size_t start = this->position.starter_address;
         size_t end = this->position.starter_address + this->position.size;
         for(size_t i = start; i < end; ++i){
@@ -322,7 +320,7 @@ namespace manager{
 
 
 
-    std::ostream& DivSeg::show(Table& table, std::ostream& os) const {
+    std::ostream& DivSeg::show(const Table& table, std::ostream& os) const {
         return Array::show( table , os);
     }
 

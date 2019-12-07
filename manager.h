@@ -47,7 +47,6 @@ namespace manager{
         std::string name;
         Unit position;
         size_t refs;
-        virtual std::ostream& show(Table&, std::ostream&) const = 0;
     public:
         Entity() : position({}),
                    e_id(E_ERR),
@@ -58,6 +57,7 @@ namespace manager{
 
         virtual Entity* clone() const = 0;
         virtual Entity* create_link(std::string) const = 0;
+        virtual std::ostream& show(const Table&, std::ostream&) const = 0;
 
         void set_pos(Unit un) noexcept { position = un; };
         void set_name(const std::string& t_name) noexcept { name = t_name; }
@@ -135,7 +135,6 @@ namespace manager{
         Program() = delete;
         explicit Program(Table& table, size_t t_mem = 50, std::string t_addr = "default");
         int run();
-        Program clone();
         Program(const Program&);
         Program(Program&&) noexcept;
         ~Program();
@@ -157,15 +156,15 @@ namespace manager{
 
 
     class Value : public Entity{
-    protected:
-        std::ostream& show(Table&, std::ostream&) const override;
     public:
-        Entity* clone() const override;
-        Entity* create_link(std::string) const override;
         Value() = default;
         Value(const Value&) = default;
         Value(Value&&) noexcept;
-        long long get_instance(Table&) const;
+
+        std::ostream& show(const Table&, std::ostream&) const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
+        long long get_instance(const Table&) const;
         void set_instance(Table&, long long new_inst) noexcept(false);
         ~Value() override = default;
     };
@@ -175,17 +174,17 @@ namespace manager{
     class Link : public Entity{
     private:
         Entity* ptr;
-    protected:
-        std::ostream& show(Table&, std::ostream&) const override;
     public:
         Link() = delete;
         explicit Link(Entity*, std::string t_name = "link_name");
         Link(const Link&);
         Link(Link&&) noexcept;
+
+        std::ostream& show(const Table&, std::ostream&) const override;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
 
-        long long get_instance(Table&) const;
+        long long get_instance(const Table&) const;
         void set_instance(Table&, long long new_inst, size_t index = 0);
         Entity* get_core_entity() const;
         ~Link() override = default;
@@ -194,18 +193,18 @@ namespace manager{
 
 
     class Array : public Entity{
-    protected:
-        std::ostream& show(Table&, std::ostream&) const override;
     public:
+
         Array() = default;
         Array(const Array&) = default;
         Array(Array&&) noexcept;
 
+        std::ostream& show(const Table&, std::ostream&) const override;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
-        long long get_single_instance(Table&, size_t t_begin) const;
+        long long get_single_instance(const Table&, size_t t_begin) const;
         void set_single_instance(Table&, size_t where, long long what);
-        std::vector<long long> operator ()(Table&, size_t t_begin, size_t t_end);
+        std::vector<long long> operator ()(const Table&, size_t t_begin, size_t t_end);
         ~Array() override = default;
     };
 
@@ -213,13 +212,13 @@ namespace manager{
 
     class DivSeg : public Array{
     protected:
-        std::ostream& show(Table&, std::ostream&) const override;
         std::vector<Program> programs;
     public:
         DivSeg() = default;
         DivSeg(const DivSeg&);
         DivSeg(DivSeg&&) noexcept;
 
+        std::ostream& show(const Table&, std::ostream&) const override;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
         void add_program(Program&);

@@ -116,13 +116,6 @@ namespace manager{
 
 
 
-    Program Program::clone() {
-        Program clone(*this);
-        return clone;
-    }
-
-
-
     Program::Program(const Program& program) : memory_quota(program.memory_quota) {
         this->file_address = program.file_address;
         this->table  = program.table;
@@ -194,6 +187,13 @@ namespace manager{
             }
         }
         return res;
+    }
+
+    std::ostream& Program::show_all(std::ostream& os) const {
+        for(auto entity : entities){
+            entity->show(table, os);
+        }
+        return os;
     }
 
 
