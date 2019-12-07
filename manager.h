@@ -57,7 +57,7 @@ namespace manager{
         Entity(Entity&&) noexcept;
 
         virtual Entity* clone() const = 0;
-        virtual Entity* create_link() const = 0;
+        virtual Entity* create_link(std::string) const = 0;
 
         void set_pos(Unit un) noexcept { position = un; };
         void set_name(const std::string& t_name) noexcept { name = t_name; }
@@ -66,7 +66,7 @@ namespace manager{
         size_t get_size() const noexcept { return  position.size; };
         Entity_ID get_entity_id() const noexcept { return e_id; }
         const std::string& get_name() const noexcept { return name; }
-        size_t refs_count() const noexcept { return refs; }
+        size_t get_refs_count() const noexcept { return refs; }
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
 
@@ -160,8 +160,8 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const override;
     public:
-        Value* clone() const override;
-        Value* create_link() const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
         Value() = default;
         Value(const Value&) = default;
         Value(Value&&) noexcept;
@@ -176,14 +176,14 @@ namespace manager{
     private:
         Entity* ptr;
     protected:
-        std::ostream& show(std::ostream&) const;
+        std::ostream& show(std::ostream&) const override;
     public:
         Link() = delete;
-        explicit Link(const Entity*);
+        explicit Link(Entity*, std::string t_name = "link_name");
         Link(const Link&);
         Link(Link&&) noexcept;
-        Link* clone() const override;
-        Link* create_link() const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
 
         long long get_instance(Table&);
         void set_instance(Table&, long long new_inst, size_t index = 0);
@@ -195,14 +195,14 @@ namespace manager{
 
     class Array : public Entity{
     protected:
-        std::ostream& show(std::ostream&) const;
+        std::ostream& show(std::ostream&) const override;
     public:
         Array() = default;
         Array(const Array&) = default;
         Array(Array&&) noexcept;
 
-        Array* clone() const override;
-        Array* create_link() const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
         long long get_single_instance(Table&, size_t t_begin) const;
         void set_single_instance(Table&, size_t where, long long what);
         std::vector<long long> operator ()(Table&, size_t t_begin, size_t t_end);
@@ -220,8 +220,8 @@ namespace manager{
         DivSeg(const DivSeg&);
         DivSeg(DivSeg&&) noexcept;
 
-        DivSeg* clone() const override;
-        DivSeg* create_link() const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
         void add_program(Program&);
         void erase_program(Program&);
 

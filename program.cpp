@@ -74,7 +74,7 @@ namespace manager{
         Unit pos = entities.at(t_index)->get_pos();
         auto mark = entities.begin() + t_index;
         (*mark)->decrement_refs();
-        if(!(*mark)->refs_count()){  // check whether entity is now free
+        if(!(*mark)->get_refs_count()){  // check whether entity is now free
             delete (*mark);  // if it has no refs any more than delete it
             table.mark_free(pos.starter_address, pos.size); // and mark as free
         }
@@ -98,7 +98,7 @@ namespace manager{
         for(; vec_it != entities.end(); ++vec_it){
             Unit current_pos = (*vec_it)->get_pos();
             (*vec_it)->decrement_refs();
-            if(!(*vec_it)->refs_count()){
+            if(!(*vec_it)->get_refs_count()){
                 table.mark_free(current_pos.starter_address, current_pos.size);
                 delete (*vec_it);
             }
@@ -178,7 +178,7 @@ namespace manager{
         d_ptr->decrement_refs();
         entities.erase(std::find(entities.begin(),
                 entities.end(), d_ptr));
-        if(!(d_ptr->refs_count())){
+        if(!(d_ptr->get_refs_count())){
             delete d_ptr;
         }
     }

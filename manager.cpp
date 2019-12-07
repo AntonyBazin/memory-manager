@@ -4,6 +4,8 @@
 
 #include "manager.h"
 
+#include <utility>
+
 namespace manager{
 
 
@@ -82,11 +84,17 @@ namespace manager{
 
 
 
-    Value* Value::clone() const {
+    Entity* Value::clone() const {
         auto val = new Value(*this);
         return val;
     }
 
+
+
+    Entity* Value::create_link(std::string t_name) const {
+        Link* lnk = new Link(const_cast<Value*>(this), t_name);
+        return lnk;
+    }
 
 
     Link::Link(const Link& lnk)  : Entity(lnk) {
@@ -106,85 +114,58 @@ namespace manager{
 
 
 
-    Link* Link::clone() const {
+    Entity* Link::clone() const {
         Link* lnk = new Link(*this);
         return lnk;
     }
 
 
-    /*Link::Link(const Entity* val) {
-        Entity* ent;
-        switch(ptr->get_entity_id()){
-            case Value_ID:
-                ent = dynamic_cast<Value<T>*>(val);
-                break;
-            case Array_ID:
-                ent = dynamic_cast<Array<T>*>(val);
-                break;
-            case DivSeg_ID:
-                ent = dynamic_cast<DivSeg<T>*>(val);
-                break;
-            default:
-                ent = dynamic_cast<Link<T>*>(val)->get_core_entity();
 
-                switch(ptr->get_entity_id()) {
-                    case Value_ID:
-                        ent = dynamic_cast<Value<T> *>(val);
-                        break;
-                    case Array_ID:
-                        ent = dynamic_cast<Array<T> *>(val);
-                        break;
-                    case DivSeg_ID:
-                        ent = dynamic_cast<DivSeg<T> *>(val);
-                        break;
-                }
-                break;
-        }
-        ptr = ent;
+    Link::Link(Entity* ent , std::string t_name) {
+        this->position = ent->get_pos();
+        this->e_id = ent->get_entity_id();
+        this->refs = 0;
+        this->ptr = ent;
+        this->name = std::move(t_name);
     }
 
 
 
     long long Link::get_instance(Table& table) {
-        auto cr = dynamic_cast<Link*>(ptr)->get_core_entity();
+        auto cr = get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
-                return dynamic_cast<Value*>(ptr)->get_instance(table);
+                return (dynamic_cast<Value*>(cr))->get_instance(table);
             case Array_ID:
-                return dynamic_cast<Array*>(ptr)->get_instance(table);
+                return (dynamic_cast<Array*>(cr))->get_single_instance(table, 0);
             case DivSeg_ID:
-                return dynamic_cast<DivSeg*>(ptr)->get_instance(table);
+                return (dynamic_cast<DivSeg*>(cr))->get_single_instance(table, 0);
             default:
-                throw std::domain_error("unexpected core entity");
-            case Link_ID:
-                break;
-            case E_ERR:
-                break;
+                throw std::domain_error("unexpected core entity on getter");
         }
     }
 
 
 
-
-    void Link::set_instance(Table& table, T new_inst, size_t index) noexcept(false) {
-        auto core = dynamic_cast<Link<T>*>(ptr)->get_core_entity();
-        switch(core->get_entity_id()) {
+    void Link::set_instance(Table& table, long long new_inst, size_t index) noexcept(false) {
+        auto cr = get_core_entity();
+        switch(cr->get_entity_id()) {
             case Value_ID:
-                (dynamic_cast<Value<T>*>(core))->set_instance(table, new_inst);
+                (dynamic_cast<Value*>(cr))->set_instance(table, new_inst);
             case Array_ID:
-                (dynamic_cast<Array<T>*>(core))->set_single_instance(index, new_inst);
+                (dynamic_cast<Array*>(cr))->set_single_instance(table, index, new_inst);
             case DivSeg_ID:
-                (dynamic_cast<DivSeg<T>*>(core))->set_single_instance(index, new_inst);
+                (dynamic_cast<DivSeg*>(cr))->set_single_instance(table, index, new_inst);
             default:
-                throw std::domain_error("unexpected core entity");
+                throw std::domain_error("unexpected core entity on setter");
         }
     }
 
 
 
 
-    Entity *Link::get_core_entity() {
-        if(ptr->get_entity_id() != Link_ID){ // core entity is something that is not a link
+    Entity* Link::get_core_entity() {
+        if(ptr->get_entity_id() != Link_ID){ //if core entity is something that is not a link
             return ptr;
         } else{
             Entity* ent = ptr;
@@ -193,7 +174,15 @@ namespace manager{
             }
             return ent;
         }
-    }*/
+    }
+
+
+
+    Entity* Link::create_link(std::string t_name) const {
+        Link* lnk = new Link(const_cast<Link*>(this), t_name);
+        return lnk;
+    }
+
 
 
     Array::Array(Array&& arr) noexcept {
@@ -242,9 +231,16 @@ namespace manager{
 
 
 
-    Array* Array::clone() const {
+    Entity* Array::clone() const {
         auto arr = new Array(*this);
         return arr;
+    }
+
+
+
+    Entity* Array::create_link(std::string t_name) const {
+        Link* lnk = new Link(const_cast<Array*>(this), t_name);
+        return lnk;
     }
 
 
@@ -286,9 +282,16 @@ namespace manager{
 
 
 
-    DivSeg* DivSeg::clone() const {
+    Entity* DivSeg::clone() const {
         auto ds = new DivSeg(*this);
         return ds;
+    }
+
+
+
+    Entity* DivSeg::create_link(std::string t_name) const {
+        Link* lnk = new Link(const_cast<DivSeg*>(this), t_name);
+        return lnk;
     }
 
 
