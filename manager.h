@@ -20,13 +20,13 @@ namespace manager{
     class Program;
     class App;
     class Entity;
-    template<class T>class Array;
-    template<class T>class Link;
-    template<class T> class Value;
-    template<class T>class DivSeg;
+    class Array;
+    class Link;
+    class Value;
+    class DivSeg;
 
     enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID, E_ERR };
-    enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE, T_ERR };
+    //enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE, T_ERR };
 
 
     struct Unit{
@@ -44,50 +44,33 @@ namespace manager{
     class Entity{
     protected:
         Entity_ID e_id;
-        Type_ID t_id;
         std::string name;
         Unit position;
         size_t refs;
-        std::vector<Program> programs;
         virtual std::ostream& show(std::ostream&) const = 0;
     public:
-        void set_pos(Unit un) noexcept { position = un; };
-        void set_name(std::string t_name) noexcept { name = std::move(t_name); }
-        Unit get_pos() const noexcept { return position; };
-        size_t memory_used() const noexcept { return  position.size; };
-        /*explicit Entity(Unit un, Entity_ID ent_id,
-                Type_ID type_id, std::string nm  = "default_name") :
-                position(un),
-                e_id(ent_id),
-                t_id(type_id),
-                name(std::move(nm)),
-                refs(0) {};*/
-
         Entity() : position({}),
                    e_id(E_ERR),
-                   t_id(T_ERR),
                    name({}),
-                   refs(0),
-                   programs({}) {}
+                   refs(0) {}
 
+        virtual Entity* clone() const = 0;
+        virtual Entity* create_link() const = 0;
 
-        Entity_ID get_entity_id() const { return e_id; }
-        Type_ID get_type_id() const { return t_id; }
-        const std::string& get_name() const { return name; }
+        void set_pos(Unit un) noexcept { position = un; };
+        void set_name(const std::string& t_name) noexcept { name = t_name; }
+
+        Unit get_pos() const noexcept { return position; };
+        size_t get_size() const noexcept { return  position.size; };
+        Entity_ID get_entity_id() const noexcept { return e_id; }
+        const std::string& get_name() const noexcept { return name; }
         size_t refs_count() const noexcept { return refs; }
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
-        void add_program(Program& pr) noexcept(false); //todo
-        void erase_program(Program& pr) noexcept(false);
 
         static Entity* generate_Entity(Entity_ID e_id,
-                Type_ID type,
                 const std::string& t_name = "def") noexcept(false);
 
-        template<class T> static Entity* create_Entity(Entity_ID id,
-                std::string t_name = "def") noexcept(false);
-
-        template <class T> Entity* create_link(const std::string& t_name = "def_lnk") const;
         virtual ~Entity() = default;
     };
 
@@ -124,9 +107,10 @@ namespace manager{
         static const int menus;  // menus amount
         static std::string menu[];  // menus
 
-        size_t get_memory_used() const;   // calculate memory usage
-        Entity* request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id,
+        size_t memory_used() const;   // calculate memory usage
+        Entity* request_memory(size_t t_amount, Entity_ID e_id,
                 const std::string& t_name) noexcept(false);
+        void add_entity(Entity*);
 
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
@@ -170,58 +154,64 @@ namespace manager{
 
 
 
-    template<class T>
     class Value : public Entity{
     protected:
         std::ostream& show(std::ostream&) const override;
     public:
+        Value* clone() const override;
+        Value* create_link() const override;
         Value() = default;
-        size_t get_size();
-        T get_instance(Table&);
-        void set_instance(Table&, T new_inst) noexcept(false);
+        long long get_instance(Table&);
+        void set_instance(Table&, long long new_inst) noexcept(false);
         ~Value() override = default;
     };
 
 
 
-    template<class T>
     class Link : public Entity{
     private:
         Entity* ptr;
     protected:
         std::ostream& show(std::ostream&) const;
     public:
+        Link* clone() const override;
+        Link* create_link() const override;
         explicit Link(const Entity*);
-        T get_instance(Table&);
-        void set_instance(Table&, T new_inst, size_t index = 0);
+        long long get_instance(Table&);
+        void set_instance(Table&, long long new_inst, size_t index = 0);
         Entity* get_core_entity();
+        ~Link() override = default;
     };
 
 
 
-    template<class T>
     class Array : public Entity{
     protected:
         std::ostream& show(std::ostream&) const;
-
     public:
+        Array* clone() const override;
+        Array* create_link() const override;
         Array() = default;
-        T get_single_instance(Table&, size_t t_begin) const;
-        void set_single_instance(Table&, size_t where, T what);
-        std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
+        long long get_single_instance(Table&, size_t t_begin) const;
+        void set_single_instance(Table&, size_t where, long long what);
+        std::vector<long long> operator ()(Table&, size_t t_begin, size_t t_end);
         ~Array() override = default;
     };
 
 
 
-    template<class T>
-    class DivSeg : public Array<T>{
+    class DivSeg : public Array{
     protected:
         std::ostream& show(std::ostream&) const override;
+        std::vector<Program> programs;
     public:
+        DivSeg* clone() const override;
+        DivSeg* create_link() const override;
+        void add_program(Program&);
+        void erase_program(Program&);
         DivSeg() = default;
         void nullify_programs() { this->programs = {}; }
-        ~DivSeg() = default;
+        ~DivSeg() override = default;
     };
 
 }

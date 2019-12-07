@@ -7,83 +7,31 @@
 namespace manager{
 
 
-    Entity *Entity::generate_Entity(Entity_ID e_id, Type_ID type, const std::string& t_name) noexcept(false) {
+    Entity *Entity::generate_Entity(Entity_ID e_id, const std::string& t_name) noexcept(false) {
         Entity* ptr;
-        switch(type){
-            case CHAR:
-                ptr = Entity::create_Entity<char>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            case INT:
-                ptr = Entity::create_Entity<int>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            case LONG:
-                ptr = Entity::create_Entity<long>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            case LONGLONG:
-                ptr = Entity::create_Entity<long long>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            case FLOAT:
-                ptr = Entity::create_Entity<float>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            case DOUBLE:
-                ptr = Entity::create_Entity<double>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            case LONGDOUBLE:
-                ptr = Entity::create_Entity<long double>(e_id, t_name);
-                ptr->t_id = type;
-                break;
-            default:
-                throw std::domain_error("Unexpected type id");
-        }
-        return ptr;
-    }
-
-
-
-    template<class T>
-    Entity *Entity::create_Entity(Entity_ID id, std::string t_name) noexcept(false) {
-        Entity* ptr;
-        DivSeg<T>* d_ptr = nullptr;
-        switch(id){
+        switch(e_id){
             case Value_ID:
-                ptr = new Value<T>;
+                ptr = new Value;
                 break;
 
             case Array_ID:
-                ptr = new Array<T>;
+                ptr = new Array;
                 break;
 
             case DivSeg_ID:
-                ptr = new DivSeg<T>;
+                ptr = new DivSeg;
                 break;
 
             default:
                 throw std::domain_error("unknown entity id");
         }
-        ptr->set_name(std::move(t_name));
+        ptr->set_name(t_name);
         return ptr;
     }
 
 
-    template<class T>
-    Entity *Entity::create_link(const std::string& t_name) const {
-        Entity* ent = Entity::generate_Entity(Link_ID, this->t_id, t_name);
-        ent->position = this->position; // can't simply use new Link(this) bc of templates
-        if(ent->refs) ent->refs = 0;
-        auto lnk = dynamic_cast<Link<T>*>(ent);
-        lnk->ptr = this;
-        return ent;
-    }
 
-
-
-    void Entity::add_program(Program &pr) noexcept(false) {
+    void DivSeg::add_program(Program &pr) noexcept(false) {
         if(this->e_id != DivSeg_ID)
             throw std::domain_error("Cannot add a program to a non-DivSeg element");
         programs.push_back(pr);
@@ -91,7 +39,7 @@ namespace manager{
 
 
 
-    void Entity::erase_program(Program &pr) noexcept(false) {
+    void DivSeg::erase_program(Program &pr) noexcept(false) {
         if(this->e_id != DivSeg_ID)
             throw std::domain_error("Cannot erase a program of a non-DivSeg element");
         programs.erase(std::find(programs.begin(), programs.end(), pr));
@@ -99,28 +47,19 @@ namespace manager{
 
 
 
-    template<class T>
-    T Value<T>::get_instance(Table& table) {
-        T v = 0;
+    long long Value::get_instance(Table& table) {
+        long long v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
-        for(size_t i = 0; i < sizeof(T); ++i){
-            v = v | (rc[i] << ((sizeof(T) - 1)*8 - i*8));
+        for(size_t i = 0; i < get_size(); ++i){
+            v = v | (rc[i] << ((get_size() - 1)*8 - i*8));
         }
         return v;
     }
 
 
 
-    template<class T>
-    size_t Value<T>::get_size() {
-        return sizeof(T);
-    }
-
-
-
-    template<class T>
-    void Value<T>::set_instance(Table& table, const T new_inst) noexcept(false) {
-        size_t size = sizeof(T);
+    void Value::set_instance(Table& table, long long new_inst) noexcept(false) {
+        size_t size = get_size();
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&new_inst);
         for(size_t i = 0; i < size; ++i){
@@ -132,8 +71,7 @@ namespace manager{
 
 
 
-    template<class T>
-    Link<T>::Link(const Entity* val) {
+    /*Link::Link(const Entity* val) {
         Entity* ent;
         switch(ptr->get_entity_id()){
             case Value_ID:
@@ -166,25 +104,28 @@ namespace manager{
 
 
 
-    template<class T>
-    T Link<T>::get_instance(Table& table) {
-        auto cr = dynamic_cast<Link<T>*>(ptr)->get_core_entity();
+    long long Link::get_instance(Table& table) {
+        auto cr = dynamic_cast<Link*>(ptr)->get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
-                return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
+                return dynamic_cast<Value*>(ptr)->get_instance(table);
             case Array_ID:
-                return dynamic_cast<Array<T>*>(ptr)->get_instance(table);
+                return dynamic_cast<Array*>(ptr)->get_instance(table);
             case DivSeg_ID:
-                return dynamic_cast<DivSeg<T>*>(ptr)->get_instance(table);
+                return dynamic_cast<DivSeg*>(ptr)->get_instance(table);
             default:
                 throw std::domain_error("unexpected core entity");
+            case Link_ID:
+                break;
+            case E_ERR:
+                break;
         }
     }
 
 
 
-    template<class T>
-    void Link<T>::set_instance(Table& table, T new_inst, size_t index) noexcept(false) {
+
+    void Link::set_instance(Table& table, T new_inst, size_t index) noexcept(false) {
         auto core = dynamic_cast<Link<T>*>(ptr)->get_core_entity();
         switch(core->get_entity_id()) {
             case Value_ID:
@@ -200,24 +141,24 @@ namespace manager{
 
 
 
-    template<class T>
-    Entity *Link<T>::get_core_entity() {
+
+    Entity *Link::get_core_entity() {
         if(ptr->get_entity_id() != Link_ID){ // core entity is something that is not a link
             return ptr;
         } else{
             Entity* ent = ptr;
             while(ent->get_entity_id() == Link_ID){  // getting out of all links
-                ent = (dynamic_cast<Link<T>*>(ent))->ptr;
+                ent = (dynamic_cast<Link*>(ent))->ptr;
             }
             return ent;
         }
-    }
+    }*/
 
 
 
-    template<class T>
-    void Array<T>::set_single_instance(Table& table, size_t where, T what) {
-        size_t size = sizeof(T);
+
+    void Array::set_single_instance(Table& table, size_t where, long long what) {
+        size_t size = get_size();
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&what);
         for(size_t i = 0; i < size; ++i){
@@ -229,10 +170,10 @@ namespace manager{
 
 
 
-    template<class T>
-    T Array<T>::get_single_instance(Table& table, size_t t_index) const{
-        size_t size = sizeof(T);
-        T v = 0;
+
+    long long Array::get_single_instance(Table& table, size_t t_index) const{
+        size_t size = get_size();
+        long long v = 0;
         auto rc = table.read_bytes(position.starter_address + (t_index*size), size);
 
         for(size_t i = 0; i < size; ++i){
@@ -243,9 +184,8 @@ namespace manager{
 
 
 
-    template<class T>
-    std::vector<T> Array<T>::operator()(Table& table, size_t t_begin, size_t t_end) {
-        std::vector<T> vec;
+    std::vector<long long> Array::operator()(Table& table, size_t t_begin, size_t t_end) {
+        std::vector<long long> vec;
         for(size_t i = t_begin; i < t_end; ++i){
             vec.push_back(get_single_instance(table, i));
         }

@@ -42,22 +42,30 @@ namespace manager{
     }
 
 
-    Entity* Program::request_memory(size_t t_amount, Type_ID t_id,
-            Entity_ID e_id, const std::string& t_name) noexcept(false) {
+
+    Entity* Program::request_memory(size_t t_amount,
+            Entity_ID e_id,
+            const std::string& t_name) noexcept(false){
 
         Unit rc;
         Entity* ptr = nullptr;
         try{
             rc = table.allocate_memory(t_amount, e_id);
-            ptr = Entity::generate_Entity(e_id, t_id, t_name);
+            ptr = Entity::generate_Entity(e_id, t_name);
             ptr->set_pos(rc);
         }
         catch(...){
             throw;
         }
-        entities.emplace_back(ptr);
-        ptr->increment_refs();
+
         return ptr;
+    }
+
+
+
+    void Program::add_entity(manager::Entity *ent) {
+        entities.emplace_back(ent);
+        ent->increment_refs();
     }
 
 
@@ -75,11 +83,11 @@ namespace manager{
 
 
 
-    size_t Program::get_memory_used() const {
+    size_t Program::memory_used() const {
         size_t sz = 0;
         std::for_each(entities.begin(),
                 entities.end(),
-                [&sz](Entity* en) { sz += en->memory_used(); });
+                [&sz](Entity* en) { sz += en->get_size(); });
         return sz;
     }
 
@@ -120,8 +128,7 @@ namespace manager{
         this->table  = program.table;
         auto it = program.entities.cbegin();  // this is a const iterator
         for(; it != program.entities.cend(); ++it){
-            this->entities.push_back(Entity::generate_Entity((*it)->get_entity_id(),
-                    (*it)->get_type_id(), (*it)->get_name()));
+            this->entities.push_back((*it)->clone());
         }
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
@@ -140,10 +147,6 @@ namespace manager{
         std::move(program.entities.begin(),
                 program.entities.end(),
                 this->entities.begin());
-        /*auto it = program.entities.begin();  // this is a const iterator
-        for(; it != program.entities.end(); ++it){
-            this->entities.push_back(*it);
-        }*/
         program.entities.clear();
         fptr[0] = nullptr;
         fptr[1] = &Program::d_request_memory;
@@ -159,9 +162,10 @@ namespace manager{
     void Program::add_existing_DivSeg(Entity *ent) noexcept(false){
         if(ent->get_entity_id() != DivSeg_ID)
             throw std::domain_error("received a non-DivSeg on adding a DivSeg");
-        ent->add_program(*this);
-        ent->increment_refs();
-        entities.push_back(ent);
+        auto d_ptr = dynamic_cast<DivSeg*>(ent);
+        d_ptr->add_program(*this);
+        d_ptr->increment_refs();
+        entities.push_back(d_ptr);
     }
 
 
@@ -169,12 +173,14 @@ namespace manager{
     void Program::refuse_div_seg(Entity* ent) noexcept(false) {
         if(ent->get_entity_id() != DivSeg_ID)
             throw std::domain_error("received a non-DivSeg on refusing a DivSeg");
-        ent->erase_program(*this);
-        ent->decrement_refs();
-        if(!(ent->refs_count())){
-            delete ent;
+        auto d_ptr = dynamic_cast<DivSeg*>(ent);
+        d_ptr->erase_program(*this);
+        d_ptr->decrement_refs();
+        entities.erase(std::find(entities.begin(),
+                entities.end(), d_ptr));
+        if(!(d_ptr->refs_count())){
+            delete d_ptr;
         }
-        entities.erase(std::find(entities.begin(), entities.end(), ent));
     }
 
 
