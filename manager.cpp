@@ -60,7 +60,7 @@ namespace manager{
 
 
 
-    long long Value::get_instance(Table& table) {
+    long long Value::get_instance(Table& table) const {
         long long v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
         for(size_t i = 0; i < get_size(); ++i){
@@ -97,6 +97,14 @@ namespace manager{
     }
 
 
+
+    std::ostream& Value::show(Table& table, std::ostream& os) const {
+        os << get_instance(table);
+        return os;
+    }
+
+
+
     Link::Link(const Link& lnk)  : Entity(lnk) {
         ptr = lnk.ptr;
     }
@@ -131,7 +139,7 @@ namespace manager{
 
 
 
-    long long Link::get_instance(Table& table) {
+    long long Link::get_instance(Table& table) const{
         auto cr = get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
@@ -164,7 +172,7 @@ namespace manager{
 
 
 
-    Entity* Link::get_core_entity() {
+    Entity* Link::get_core_entity() const {
         if(ptr->get_entity_id() != Link_ID){ //if core entity is something that is not a link
             return ptr;
         } else{
@@ -181,6 +189,13 @@ namespace manager{
     Entity* Link::create_link(std::string t_name) const {
         Link* lnk = new Link(const_cast<Link*>(this), t_name);
         return lnk;
+    }
+
+
+
+    std::ostream& Link::show(Table& table, std::ostream& os) const {
+        os << get_instance(table);
+        return os;
     }
 
 
@@ -245,6 +260,17 @@ namespace manager{
 
 
 
+    std::ostream& Array::show(Table& table, std::ostream& os) const {
+        size_t start = this->position.starter_address;
+        size_t end = this->position.starter_address + this->position.size;
+        for(size_t i = start; i < end; ++i){
+            os << get_single_instance(table, i);
+        }
+        return os;
+    }
+
+
+
     void DivSeg::add_program(Program &pr) noexcept(false) {
         if(this->e_id != DivSeg_ID)
             throw std::domain_error("Cannot add a program to a non-DivSeg element");
@@ -292,6 +318,12 @@ namespace manager{
     Entity* DivSeg::create_link(std::string t_name) const {
         Link* lnk = new Link(const_cast<DivSeg*>(this), t_name);
         return lnk;
+    }
+
+
+
+    std::ostream& DivSeg::show(Table& table, std::ostream& os) const {
+        return Array::show( table , os);
     }
 
 
