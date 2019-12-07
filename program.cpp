@@ -185,7 +185,7 @@ namespace manager{
 
 
 
-    std::vector<Entity *> Program::get_div_segs() const noexcept {
+    std::vector<Entity *> Program::get_div_segs() noexcept {
         auto iter = entities.begin();
         std::vector<Entity*> res = {};
         for(; iter != entities.end(); ++iter){

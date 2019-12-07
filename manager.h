@@ -53,6 +53,8 @@ namespace manager{
                    e_id(E_ERR),
                    name({}),
                    refs(0) {}
+        Entity(const Entity&);
+        Entity(Entity&&) noexcept;
 
         virtual Entity* clone() const = 0;
         virtual Entity* create_link() const = 0;
@@ -116,7 +118,7 @@ namespace manager{
         void free_all_memory() noexcept;
         void add_existing_DivSeg(Entity*) noexcept(false);
         void refuse_div_seg(Entity*) noexcept(false);
-        std::vector<Entity*> get_div_segs() const noexcept;
+        std::vector<Entity*> get_div_segs() noexcept;
 
         std::ostream& show_all(std::ostream&) const;
 
@@ -161,6 +163,8 @@ namespace manager{
         Value* clone() const override;
         Value* create_link() const override;
         Value() = default;
+        Value(const Value&) = default;
+        Value(Value&&) noexcept;
         long long get_instance(Table&);
         void set_instance(Table&, long long new_inst) noexcept(false);
         ~Value() override = default;
@@ -174,9 +178,13 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const;
     public:
+        Link() = delete;
+        explicit Link(const Entity*);
+        Link(const Link&);
+        Link(Link&&) noexcept;
         Link* clone() const override;
         Link* create_link() const override;
-        explicit Link(const Entity*);
+
         long long get_instance(Table&);
         void set_instance(Table&, long long new_inst, size_t index = 0);
         Entity* get_core_entity();
@@ -189,9 +197,12 @@ namespace manager{
     protected:
         std::ostream& show(std::ostream&) const;
     public:
+        Array() = default;
+        Array(const Array&) = default;
+        Array(Array&&) noexcept;
+
         Array* clone() const override;
         Array* create_link() const override;
-        Array() = default;
         long long get_single_instance(Table&, size_t t_begin) const;
         void set_single_instance(Table&, size_t where, long long what);
         std::vector<long long> operator ()(Table&, size_t t_begin, size_t t_end);
@@ -205,11 +216,15 @@ namespace manager{
         std::ostream& show(std::ostream&) const override;
         std::vector<Program> programs;
     public:
+        DivSeg() = default;
+        DivSeg(const DivSeg&);
+        DivSeg(DivSeg&&) noexcept;
+
         DivSeg* clone() const override;
         DivSeg* create_link() const override;
         void add_program(Program&);
         void erase_program(Program&);
-        DivSeg() = default;
+
         void nullify_programs() { this->programs = {}; }
         ~DivSeg() override = default;
     };

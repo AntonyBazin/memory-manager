@@ -31,18 +31,29 @@ namespace manager{
 
 
 
-    void DivSeg::add_program(Program &pr) noexcept(false) {
-        if(this->e_id != DivSeg_ID)
-            throw std::domain_error("Cannot add a program to a non-DivSeg element");
-        programs.push_back(pr);
+    Entity::Entity(const Entity& ent) {
+        this->e_id = ent.e_id;
+        this->name = ent.name;
+        this->position = ent.position;
+        this->refs = ent.refs;
     }
 
 
 
-    void DivSeg::erase_program(Program &pr) noexcept(false) {
-        if(this->e_id != DivSeg_ID)
-            throw std::domain_error("Cannot erase a program of a non-DivSeg element");
-        programs.erase(std::find(programs.begin(), programs.end(), pr));
+    Entity::Entity(Entity&& ent) noexcept {
+        this->e_id = ent.e_id;
+        this->name = ent.name;
+        this->position = ent.position;
+        this->refs = ent.refs;
+    }
+
+
+
+    Value::Value(Value&& val) noexcept {
+        this->e_id = val.e_id;
+        this->name = val.name;
+        this->position = val.position;
+        this->refs = val.refs;
     }
 
 
@@ -69,6 +80,36 @@ namespace manager{
         table.write(position.starter_address, position.size, v);
     }
 
+
+
+    Value* Value::clone() const {
+        auto val = new Value(*this);
+        return val;
+    }
+
+
+
+    Link::Link(const Link& lnk)  : Entity(lnk) {
+        ptr = lnk.ptr;
+    }
+
+
+
+    Link::Link(Link&& lnk) noexcept {
+        this->e_id = lnk.e_id;
+        this->name = lnk.name;
+        this->position = lnk.position;
+        this->refs = lnk.refs;
+        ptr = lnk.ptr;
+        lnk.ptr = nullptr;
+    }
+
+
+
+    Link* Link::clone() const {
+        Link* lnk = new Link(*this);
+        return lnk;
+    }
 
 
     /*Link::Link(const Entity* val) {
@@ -155,6 +196,13 @@ namespace manager{
     }*/
 
 
+    Array::Array(Array&& arr) noexcept {
+        this->e_id = arr.e_id;
+        this->name = arr.name;
+        this->position = arr.position;
+        this->refs = arr.refs;
+    }
+
 
 
     void Array::set_single_instance(Table& table, size_t where, long long what) {
@@ -193,6 +241,55 @@ namespace manager{
     }
 
 
+
+    Array* Array::clone() const {
+        auto arr = new Array(*this);
+        return arr;
+    }
+
+
+
+    void DivSeg::add_program(Program &pr) noexcept(false) {
+        if(this->e_id != DivSeg_ID)
+            throw std::domain_error("Cannot add a program to a non-DivSeg element");
+        programs.push_back(pr);
+    }
+
+
+
+    void DivSeg::erase_program(Program &pr) noexcept(false) {
+        if(this->e_id != DivSeg_ID)
+            throw std::domain_error("Cannot erase a program of a non-DivSeg element");
+        programs.erase(std::find(programs.begin(), programs.end(), pr));
+    }
+
+
+
+    DivSeg::DivSeg(const DivSeg& ds) : Array(ds) {
+        std::move(ds.programs.begin(),
+                  ds.programs.end(),
+                  this->programs.begin());
+    }
+
+
+
+    DivSeg::DivSeg(DivSeg&& ds) noexcept {
+        this->e_id = ds.e_id;
+        this->name = ds.name;
+        this->position = ds.position;
+        this->refs = ds.refs;
+        std::move(ds.programs.begin(),
+                  ds.programs.end(),
+                  this->programs.begin());
+        ds.programs.clear();
+    }
+
+
+
+    DivSeg* DivSeg::clone() const {
+        auto ds = new DivSeg(*this);
+        return ds;
+    }
 
 
 }
