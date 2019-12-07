@@ -190,5 +190,57 @@ namespace manager{
         return res;
     }
 
+    std::ostream &Program::show_all(std::ostream& os) const {
+        auto iter = entities.begin();
+        os << "List of variables:\n" << std::endl;
+        for(; iter != entities.end(); ++iter){
+            switch((*iter)->get_type_id()){
+                case CHAR:
+                    os << "char ";
+                    break;
+                case INT:
+                    os << "int ";
+                    break;
+                case LONG:
+                    os << "long ";
+                    break;
+                case LONGLONG:
+                    os << "long long ";
+                    break;
+                case FLOAT:
+                    os << "float ";
+                    break;
+                case DOUBLE:
+                    os << "double ";
+                    break;
+                case LONGDOUBLE:
+                    os << "long double ";
+                    break;
+                default:
+                    os << "error ";
+            }
+
+            switch((*iter)->get_entity_id()){
+                case Value_ID:
+                    os << "Value ";
+                    break;
+
+                case Array_ID:
+                    os << "Array ";
+                    break;
+
+                case DivSeg_ID:
+                    os << "DivSeg ";
+                    break;
+
+                default:
+                    os << "Error_ent ";
+            }
+            os << (*iter)->get_name() << std::endl;
+
+        }
+        return os;
+    }
+
 
 }

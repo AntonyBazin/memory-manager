@@ -100,6 +100,30 @@ namespace manager{
 
 
     template<class T>
+    std::ostream &Entity::print_instance(std::ostream& os) noexcept { //todo
+
+        switch(e_id){
+            case Value_ID:
+                os << "Value ";
+                break;
+
+            case Array_ID:
+                os << "Array ";
+                break;
+
+            case DivSeg_ID:
+                os << "DivSeg ";
+                break;
+
+            default:
+                os << "Error_ent ";
+        }
+        os << name << std::endl;
+
+    }
+
+
+    template<class T>
     T Value<T>::get_instance(Table& table) {
         T v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
@@ -167,11 +191,11 @@ namespace manager{
 
 
     template<class T>
-    T Link<T>::get_instance(Table& table) {
+    std::vector<T> Link<T>::get_instance(Table& table) {
         auto cr = dynamic_cast<Link<T>*>(ptr)->get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
-                return dynamic_cast<Value<T>*>(ptr)->get_instance(table);
+                return { dynamic_cast<Value<T>*>(ptr)->get_instance(table) };
             case Array_ID:
                 return dynamic_cast<Array<T>*>(ptr)->get_instance(table);
             case DivSeg_ID:
@@ -253,6 +277,11 @@ namespace manager{
     }
 
 
+
+    template<class T>
+    std::vector<T> Array<T>::get_instance() const {
+        return *this(0, this->position.size/sizeof(T));
+    }
 
 
 }

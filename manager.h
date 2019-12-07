@@ -77,8 +77,9 @@ namespace manager{
         size_t refs_count() const noexcept { return refs; }
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
-        void add_program(Program& pr) noexcept(false); //todo
+        void add_program(Program& pr) noexcept(false);
         void erase_program(Program& pr) noexcept(false);
+        template<class T> std::ostream& print_instance(std::ostream&) noexcept;
 
         static Entity* generate_Entity(Entity_ID e_id,
                 Type_ID type,
@@ -192,7 +193,7 @@ namespace manager{
         std::ostream& show(std::ostream&) const;
     public:
         explicit Link(const Entity*);
-        T get_instance(Table&);
+        std::vector<T> get_instance(Table&);
         void set_instance(Table&, T new_inst, size_t index = 0);
         Entity* get_core_entity();
     };
@@ -208,6 +209,7 @@ namespace manager{
         Array() = default;
         T get_single_instance(Table&, size_t t_begin) const;
         void set_single_instance(Table&, size_t where, T what);
+        std::vector<T> get_instance() const;
         std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
         ~Array() override = default;
     };
