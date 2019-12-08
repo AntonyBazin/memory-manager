@@ -59,6 +59,7 @@ namespace manager{
         virtual Entity* create_link(std::string) const = 0;
         virtual std::ostream& show(const Table&, std::ostream&) const = 0;
 
+        void set_id(Entity_ID id) noexcept { e_id = id; }
         void set_pos(Unit un) noexcept { position = un; };
         void set_name(const std::string& t_name) noexcept { name = t_name; }
         void set_single_size(size_t sz) { single_size = sz; }
@@ -222,7 +223,7 @@ namespace manager{
         DivSeg(DivSeg&&) noexcept;
 
         std::ostream& show(const Table&, std::ostream&) const override;
-        std::ostream& show_programs (const Table&, std::ostream&) const;
+        std::ostream& show_programs (std::ostream&) const;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
         void add_program(Program&);

@@ -296,7 +296,7 @@ namespace manager{
         }
         switch(entities.at(index)->get_entity_id()){
             case Value_ID:
-                std::cout << "Type: Value;" << std::endl;
+                std::cout << "Value " << entities.at(index)->get_name();
                 std::cout << "Choose action:" << std::endl
                           << "1 - print value" << std::endl
                           << "2 - set value" << std::endl;
@@ -317,7 +317,7 @@ namespace manager{
                 break;
 
             case Array_ID:
-                std::cout << "Type: Array;" << std::endl;
+                std::cout << "Array " << entities.at(index)->get_name();
                 std::cout << "Choose action:" << std::endl
                           << "1 - print values" << std::endl
                           << "2 - set value by index" << std::endl
@@ -356,7 +356,7 @@ namespace manager{
                 break;
 
             case DivSeg_ID:
-                std::cout << "Type: DivSeg;" << std::endl;
+                std::cout << "DivSeg " << entities.at(index)->get_name();
                 std::cout << "Choose action:" << std::endl
                           << "1 - print values" << std::endl
                           << "2 - set value by index" << std::endl
@@ -391,8 +391,7 @@ namespace manager{
                         break;
                     case 4:
                         std::cout << "Programs:" << std::endl;
-                        dynamic_cast<DivSeg*>(entities.at(index))->show_programs(table,
-                                std::cout);
+                        dynamic_cast<DivSeg*>(entities.at(index))->show_programs(std::cout);
                         break;
                     default:
                         std::cout << "unexpected error" << std::endl;
@@ -400,7 +399,7 @@ namespace manager{
                 }
                 break;
             case Link_ID:
-                std::cout << "Type: Link;" << std::endl;
+                std::cout << "Link " << entities.at(index)->get_name();
                 std::cout << "Choose action:" << std::endl
                           << "1 - print value" << std::endl
                           << "2 - set value" << std::endl;
@@ -432,6 +431,24 @@ namespace manager{
         std::cout << "Entities amount: " << entities.size() << std::endl;
         std::cout << "Total memory used: " << memory_used() << std::endl;
         std::cout << "Of memory quota " << memory_quota;
+        return 1;
+    }
+
+
+
+    int Program::d_show_divsegs() {
+        for(auto entity : entities){
+            try{
+                if(entity->get_entity_id() == DivSeg_ID){
+                    entity->show(table, std::cout);
+                    std::cout << std::endl;
+                    dynamic_cast<DivSeg*>(entity)->show_programs(std::cout);
+                }
+            } catch(std::exception &ex){
+                std::cout << ex.what();
+                return 0;
+            }
+        }
         return 1;
     }
 

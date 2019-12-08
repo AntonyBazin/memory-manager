@@ -29,6 +29,7 @@ namespace manager{
             default:
                 throw std::domain_error("unknown entity id");
         }
+        ptr->set_id(e_id);
         ptr->set_name(t_name);
         ptr->set_single_size(single_size);
         return ptr;
@@ -333,7 +334,7 @@ namespace manager{
 
 
 
-    std::ostream& DivSeg::show_programs(const Table& table, std::ostream& os) const {
+    std::ostream& DivSeg::show_programs(std::ostream& os) const {
         for(auto it = programs.begin(); it != programs.end(); ++it){
             os << (*it).get_address() << " ";
         }
