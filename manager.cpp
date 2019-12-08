@@ -4,12 +4,14 @@
 
 #include "manager.h"
 
-#include <utility>
 
 namespace manager{
 
 
-    Entity *Entity::generate_Entity(Entity_ID e_id, const std::string& t_name) noexcept(false) {
+    Entity* Entity::generate_Entity(Entity_ID e_id,
+            size_t single_size,
+            const std::string& t_name) noexcept(false) {
+
         Entity* ptr;
         switch(e_id){
             case Value_ID:
@@ -28,6 +30,7 @@ namespace manager{
                 throw std::domain_error("unknown entity id");
         }
         ptr->set_name(t_name);
+        ptr->set_single_size(single_size);
         return ptr;
     }
 
@@ -38,6 +41,7 @@ namespace manager{
         this->name = ent.name;
         this->position = ent.position;
         this->refs = ent.refs;
+        this->single_size = ent.single_size;
     }
 
 
@@ -47,6 +51,7 @@ namespace manager{
         this->name = ent.name;
         this->position = ent.position;
         this->refs = ent.refs;
+        this->single_size = ent.single_size;
     }
 
 
@@ -95,6 +100,8 @@ namespace manager{
         Link* lnk = new Link(const_cast<Value*>(this), t_name);
         return lnk;
     }
+
+
 
     std::ostream& Value::show(const Table& table, std::ostream& os) const {
         os << get_instance(table);
@@ -208,7 +215,7 @@ namespace manager{
 
 
     void Array::set_single_instance(Table& table, size_t where, long long what) {
-        size_t size = get_size();
+        size_t size = single_size;
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&what);
         for(size_t i = 0; i < size; ++i){
@@ -222,7 +229,7 @@ namespace manager{
 
 
     long long Array::get_single_instance(const Table& table, size_t t_index) const{
-        size_t size = get_size();
+        size_t size = single_size;
         long long v = 0;
         auto rc = table.read_bytes(position.starter_address + (t_index*size), size);
 

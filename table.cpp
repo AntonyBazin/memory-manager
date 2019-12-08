@@ -55,7 +55,7 @@ namespace manager{
 
 
 
-    Unit Table::allocate_memory(size_t t_size, Entity_ID id) noexcept(false) {
+    Unit Table::allocate_memory(size_t t_size) noexcept(false) {
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_size](Unit un) -> bool { return un.size >= t_size; });

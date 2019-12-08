@@ -33,9 +33,7 @@ namespace manager{
         size_t starter_address;
         size_t size;
 
-        Unit(size_t t_strt, size_t t_size) :
-        starter_address(t_strt), size(t_size){};
-
+        Unit(size_t t_strt, size_t t_size) : starter_address(t_strt), size(t_size){};
         Unit() : starter_address(0), size(0) {};
     };
 
@@ -47,11 +45,13 @@ namespace manager{
         std::string name;
         Unit position;
         size_t refs;
+        size_t single_size;
     public:
         Entity() : position({}),
                    e_id(E_ERR),
                    name({}),
-                   refs(0) {}
+                   refs(0),
+                   single_size(0) {}
         Entity(const Entity&);
         Entity(Entity&&) noexcept;
 
@@ -61,6 +61,7 @@ namespace manager{
 
         void set_pos(Unit un) noexcept { position = un; };
         void set_name(const std::string& t_name) noexcept { name = t_name; }
+        void set_single_size(size_t sz) { single_size = sz; }
 
         Unit get_pos() const noexcept { return position; };
         size_t get_size() const noexcept { return  position.size; };
@@ -71,6 +72,7 @@ namespace manager{
         void decrement_refs() noexcept { --refs; }
 
         static Entity* generate_Entity(Entity_ID e_id,
+                size_t single_size,
                 const std::string& t_name = "def") noexcept(false);
 
         virtual ~Entity() = default;
@@ -87,7 +89,7 @@ namespace manager{
         Table();
         void defragmentation();   // obvious
         void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
-        Unit allocate_memory(size_t t_size, Entity_ID id);
+        Unit allocate_memory(size_t t_size);
 
         std::vector<unsigned char> read_bytes(size_t t_strt,
                 size_t t_size) const noexcept(false);
@@ -122,14 +124,14 @@ namespace manager{
 
         std::ostream& show_all(std::ostream&) const;
 
-        int d_request_memory(Table&);
-        int d_free_memory(Table&);
-        int d_use_divsegs(Table&);
-        int d_show_all(Table&);
-        int d_show_divsegs(Table&);
-        int d_calc_memory(Table&);
+        int d_create_entity();
+        int d_free_memory();
+        int d_use_divsegs();
+        int d_show_all();
+        int d_show_divsegs();
+        int d_calc_memory();
         int answer(int menus_count, std::string menus[]);
-        int (Program::*fptr[7])(Table&);
+        int (Program::*fptr[7])();
 
     public:
         Program() = delete;
@@ -194,7 +196,6 @@ namespace manager{
 
     class Array : public Entity{
     public:
-
         Array() = default;
         Array(const Array&) = default;
         Array(Array&&) noexcept;

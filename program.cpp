@@ -8,19 +8,20 @@
 namespace manager{
 
     std::string Program::menu[] = {"0. Stop controlling this program",
-                                   "1. Request memory",
+                                   "1. Request memory for an entity",
                                    "2. Free memory",
-                                   "3. Use div segments",
+                                   "3. Work with entity",
                                    "4. Show all memory info",
                                    "5. Show div segments",
                                    "6. Calculate total memory used"};
+
     const int Program::menus = sizeof(menu)/sizeof(menu[0]);
 
 
     int Program::run() {
         int rc;
         while((rc = answer(menus, menu))){
-            (this->*fptr[rc])(table);
+            (this->*fptr[rc])();
         }
         std::cout << "That's all. Bye!" << std::endl;
         return 0;
@@ -33,7 +34,7 @@ namespace manager{
         file_address = std::move(t_addr);
         entities = {};
         fptr[0] = nullptr;
-        fptr[1] = &Program::d_request_memory;
+        fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
         fptr[3] = &Program::d_use_divsegs;
         fptr[4] = &Program::d_show_all;
@@ -50,20 +51,19 @@ namespace manager{
         Unit rc;
         Entity* ptr = nullptr;
         try{
-            rc = table.allocate_memory(t_amount, e_id);
-            ptr = Entity::generate_Entity(e_id, t_name);
+            rc = table.allocate_memory(t_amount);
+            ptr = Entity::generate_Entity(e_id, e_id, t_name);
             ptr->set_pos(rc);
         }
         catch(...){
             throw;
         }
-
         return ptr;
     }
 
 
 
-    void Program::add_entity(manager::Entity *ent) {
+    void Program::add_entity(Entity* ent) {
         entities.emplace_back(ent);
         ent->increment_refs();
     }
@@ -124,7 +124,7 @@ namespace manager{
             this->entities.push_back((*it)->clone());
         }
         fptr[0] = nullptr;
-        fptr[1] = &Program::d_request_memory;
+        fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
         fptr[3] = &Program::d_use_divsegs;
         fptr[4] = &Program::d_show_all;
@@ -142,7 +142,7 @@ namespace manager{
                 this->entities.begin());
         program.entities.clear();
         fptr[0] = nullptr;
-        fptr[1] = &Program::d_request_memory;
+        fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
         fptr[3] = &Program::d_use_divsegs;
         fptr[4] = &Program::d_show_all;
@@ -189,11 +189,70 @@ namespace manager{
         return res;
     }
 
+
+
     std::ostream& Program::show_all(std::ostream& os) const {
         for(auto entity : entities){
             entity->show(table, os);
         }
         return os;
+    }
+
+
+
+    int Program::d_create_entity() {
+        size_t rc;   // deciding the type of the entity
+        size_t sz;  // for size of 1 element
+        size_t amount;  // for array-based classes
+        size_t index;  // for links
+        std::string new_name;  // for the name
+        Entity* ptr;
+        std::cout << "Enter the parameters of the new entity:" << std::endl;
+        std::cout << "Choose the type of the entity:" << std::endl;
+        std::cout << "1 - single value,\n2 - array,\n3 - divseg,\n4 - link.";
+        std::cin >> rc;
+        std::cout << "Enter the name of the entity: ";
+        std::cin >> new_name;
+
+        switch(rc){
+            case 1:
+                std::cout << "Enter the size of the value: ";
+                std::cin >> sz;
+                ptr = request_memory(sz, Value_ID, new_name);
+                add_entity(ptr);
+                break;
+            case 2:
+                std::cout << "Enter the size of 1 array element: ";
+                std::cin >> sz;
+                std::cout << "Enter the length of the array";
+                std::cin >> amount;
+                ptr = request_memory((sz*amount), Array_ID, new_name);
+                add_entity(ptr);
+                break;
+            case 3:
+                std::cout << "Enter the size of 1 divseg array element: ";
+                std::cin >> sz;
+                std::cout << "Enter the length of the divseg array";
+                std::cin >> amount;
+                ptr = request_memory((sz*amount), DivSeg_ID, new_name);
+                add_entity(ptr);
+                break;
+            case 4:
+                std::cout << "Enter the number of the existing entity"
+                          << std::endl << " to create a link to: ";
+                std::cin >> index;
+                try{
+                    ptr = entities.at(index)->create_link(new_name);
+                } catch(std::exception &ex){
+                    std::cout << ex.what();
+                    return 0;
+                }
+                add_entity(ptr);
+                break;
+            default:
+                break;
+        }
+        return 1;
     }
 
 
