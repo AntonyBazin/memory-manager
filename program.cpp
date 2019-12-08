@@ -12,8 +12,7 @@ namespace manager{
                                    "2. Free memory",
                                    "3. Work with entity",
                                    "4. Show all memory info",
-                                   "5. Show div segments",
-                                   "6. Calculate total memory used"};
+                                   "5. Show div segments"};
 
     const int Program::menus = sizeof(menu)/sizeof(menu[0]);
 
@@ -39,7 +38,6 @@ namespace manager{
         fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
-        fptr[6] = &Program::d_calc_memory;
     }
 
 
@@ -132,7 +130,6 @@ namespace manager{
         fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
-        fptr[6] = &Program::d_calc_memory;
     }
 
 
@@ -150,7 +147,6 @@ namespace manager{
         fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
-        fptr[6] = &Program::d_calc_memory;
     }
 
 
@@ -437,19 +433,31 @@ namespace manager{
 
 
     int Program::d_show_divsegs() {
-        for(auto entity : entities){
             try{
-                if(entity->get_entity_id() == DivSeg_ID){
-                    entity->show(table, std::cout);
-                    std::cout << std::endl;
-                    dynamic_cast<DivSeg*>(entity)->show_programs(std::cout);
+                for(auto entity : get_div_segs()){
+                    if(entity->get_entity_id() == DivSeg_ID){
+                        entity->show(table, std::cout);
+                        std::cout << std::endl;
+                        dynamic_cast<DivSeg*>(entity)->show_programs(std::cout);
+                    }
                 }
             } catch(std::exception &ex){
                 std::cout << ex.what();
                 return 0;
             }
-        }
         return 1;
+    }
+
+
+
+    int Program::answer(int menus_count, std::string *menus) {
+        short ans = 0;
+        std::cout << "Choose action: " << std::endl;
+        for(int i = 0; i < menus_count; ++i){
+            std::cout << menus[i] << std::endl;
+        }
+        std::cin >> ans;
+        return ans;
     }
 
 

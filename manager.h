@@ -26,7 +26,6 @@ namespace manager{
     class DivSeg;
 
     enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID, E_ERR };
-    //enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE, T_ERR };
 
 
     struct Unit{
@@ -120,7 +119,7 @@ namespace manager{
 
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
-        void add_existing_DivSeg(Entity*) noexcept(false);
+        void add_existing_DivSeg(Entity*) noexcept(false); //todo include in dialogue
         void refuse_div_seg(Entity*) noexcept(false);
         std::vector<Entity*> get_div_segs() noexcept;
 
@@ -131,7 +130,6 @@ namespace manager{
         int d_use_entity();
         int d_show_all();
         int d_show_divsegs();
-        int d_calc_memory();
         int answer(int menus_count, std::string menus[]);
         int (Program::*fptr[7])();
 
