@@ -48,6 +48,9 @@ namespace manager{
             Entity_ID e_id,
             const std::string& t_name) noexcept(false){
 
+        if(t_amount + memory_used() > memory_quota)
+            throw std::runtime_error("memory quota reached for this program");
+
         Unit rc;
         Entity* ptr = nullptr;
         try{
@@ -214,44 +217,50 @@ namespace manager{
         std::cout << "Enter the name of the entity: ";
         std::cin >> new_name;
 
-        switch(rc){
-            case 1:
-                std::cout << "Enter the size of the value: ";
-                std::cin >> sz;
-                ptr = request_memory(sz, Value_ID, new_name);
-                add_entity(ptr);
-                break;
-            case 2:
-                std::cout << "Enter the size of 1 array element: ";
-                std::cin >> sz;
-                std::cout << "Enter the length of the array";
-                std::cin >> amount;
-                ptr = request_memory((sz*amount), Array_ID, new_name);
-                add_entity(ptr);
-                break;
-            case 3:
-                std::cout << "Enter the size of 1 divseg array element: ";
-                std::cin >> sz;
-                std::cout << "Enter the length of the divseg array";
-                std::cin >> amount;
-                ptr = request_memory((sz*amount), DivSeg_ID, new_name);
-                add_entity(ptr);
-                break;
-            case 4:
-                std::cout << "Enter the number of the existing entity"
-                          << std::endl << " to create a link to: ";
-                std::cin >> index;
-                try{
-                    ptr = entities.at(index)->create_link(new_name);
-                } catch(std::exception& ex){
-                    std::cout << ex.what();
-                    return 0;
-                }
-                add_entity(ptr);
-                break;
-            default:
-                break;
+        try{
+            switch(rc){
+                case 1:
+                    std::cout << "Enter the size of the value: ";
+                    std::cin >> sz;
+                    ptr = request_memory(sz, Value_ID, new_name);
+                    add_entity(ptr);
+                    break;
+                case 2:
+                    std::cout << "Enter the size of 1 array element: ";
+                    std::cin >> sz;
+                    std::cout << "Enter the length of the array";
+                    std::cin >> amount;
+                    ptr = request_memory((sz*amount), Array_ID, new_name);
+                    add_entity(ptr);
+                    break;
+                case 3:
+                    std::cout << "Enter the size of 1 divseg array element: ";
+                    std::cin >> sz;
+                    std::cout << "Enter the length of the divseg array";
+                    std::cin >> amount;
+                    ptr = request_memory((sz*amount), DivSeg_ID, new_name);
+                    add_entity(ptr);
+                    break;
+                case 4:
+                    std::cout << "Enter the number of the existing entity"
+                              << std::endl << " to create a link to: ";
+                    std::cin >> index;
+                    try{
+                        ptr = entities.at(index)->create_link(new_name);
+                    } catch(std::exception& ex){
+                        std::cout << ex.what();
+                        return 0;
+                    }
+                    add_entity(ptr);
+                    break;
+                default:
+                    break;
+            }
+        } catch(std::exception& ex){
+            std::cout << ex.what();
+            return 0;
         }
+
         return 1;
     }
 
@@ -414,6 +423,15 @@ namespace manager{
             default:
                 throw std::domain_error("unknown entity id");
         }
+        return 1;
+    }
+
+
+
+    int Program::d_show_all() {
+        std::cout << "Entities amount: " << entities.size() << std::endl;
+        std::cout << "Total memory used: " << memory_used() << std::endl;
+        std::cout << "Of memory quota " << memory_quota;
         return 1;
     }
 
