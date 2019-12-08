@@ -36,7 +36,7 @@ namespace manager{
         fptr[0] = nullptr;
         fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_divsegs;
+        fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
         fptr[6] = &Program::d_calc_memory;
@@ -126,7 +126,7 @@ namespace manager{
         fptr[0] = nullptr;
         fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_divsegs;
+        fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
         fptr[6] = &Program::d_calc_memory;
@@ -144,7 +144,7 @@ namespace manager{
         fptr[0] = nullptr;
         fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_divsegs;
+        fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
         fptr[6] = &Program::d_calc_memory;
@@ -271,6 +271,151 @@ namespace manager{
     }
 
 
+
+    int Program::d_use_entity() {
+        size_t index;  // index of the entity
+        size_t i1, i2;
+        size_t ct;  // controller of action
+        long long val;
+        std::cout << "Enter the number of entity to use: ";
+        std::cin >> index;
+        try{
+            entities.at(index);
+        } catch(std::exception& ex){
+            std::cout << ex.what();
+            return 0;
+        }
+        switch(entities.at(index)->get_entity_id()){
+            case Value_ID:
+                std::cout << "Type: Value;" << std::endl;
+                std::cout << "Choose action:" << std::endl
+                          << "1 - print value" << std::endl
+                          << "2 - set value" << std::endl;
+                std::cin >> ct;
+                switch(ct){
+                    case 1:
+                        entities.at(index)->show(table, std::cout);
+                        break;
+                    case 2:
+                        std::cout << "Enter value to be set: ";
+                        std::cin >> val;
+                        dynamic_cast<Value*>(entities.at(index))->set_instance(table, val);
+                        break;
+                    default:
+                        std::cout << "wrong index, try again!" << std::endl;
+                        break;
+                }
+                break;
+
+            case Array_ID:
+                std::cout << "Type: Array;" << std::endl;
+                std::cout << "Choose action:" << std::endl
+                          << "1 - print values" << std::endl
+                          << "2 - set value by index" << std::endl
+                          << "3 - print value by indexes" << std::endl;
+                std::cin >> ct;
+                switch(ct){
+                    case 1:
+                        entities.at(index)->show(table, std::cout);
+                        break;
+                    case 2:
+                        std::cout << "Enter index: ";
+                        std::cin >> i1;
+                        std::cout << "Enter value ";
+                        std::cin >> val;
+                        dynamic_cast<Array*>(entities.at(index))->set_single_instance(table,
+                                                                                      (entities.at(index)->get_single_size()*i1),
+                                                                                      val);
+                        break;
+                    case 3:
+                        std::cout << "Enter the start and end indexes: ";
+                        std::cin >> i1 >> i2;
+                        try{
+                            auto vec = dynamic_cast<Array*>(entities.at(index))->operator()(table, i1, i2);
+                            for(long long i : vec){
+                                std::cout << " " << i;
+                            }
+                        } catch(std::exception& ex){
+                            std::cout << ex.what();
+                            return 0;
+                        }
+                        break;
+                    default:
+                        std::cout << "unexpected error" << std::endl;
+                        return 0;
+                }
+                break;
+
+            case DivSeg_ID:
+                std::cout << "Type: DivSeg;" << std::endl;
+                std::cout << "Choose action:" << std::endl
+                          << "1 - print values" << std::endl
+                          << "2 - set value by index" << std::endl
+                          << "3 - print value by indexes" << std::endl
+                          << "4 - print programs" << std::endl;
+                std::cin >> ct;
+                switch(ct){
+                    case 1:
+                        entities.at(index)->show(table, std::cout);
+                        break;
+                    case 2:
+                        std::cout << "Enter index: ";
+                        std::cin >> i1;
+                        std::cout << "Enter value ";
+                        std::cin >> val;
+                        dynamic_cast<DivSeg*>(entities.at(index))->set_single_instance(table,
+                                                                                      (entities.at(index)->get_single_size()*i1),
+                                                                                      val);
+                        break;
+                    case 3:
+                        std::cout << "Enter the start and end indexes: ";
+                        std::cin >> i1 >> i2;
+                        try{
+                            auto vec = dynamic_cast<DivSeg*>(entities.at(index))->operator()(table, i1, i2);
+                            for(long long i : vec){
+                                std::cout << " " << i;
+                            }
+                        } catch(std::exception& ex){
+                            std::cout << ex.what();
+                            return 0;
+                        }
+                        break;
+                    case 4:
+                        std::cout << "Programs:" << std::endl;
+                        dynamic_cast<DivSeg*>(entities.at(index))->show_programs(table,
+                                std::cout);
+                        break;
+                    default:
+                        std::cout << "unexpected error" << std::endl;
+                        return 0;
+                }
+                break;
+            case Link_ID:
+                std::cout << "Type: Link;" << std::endl;
+                std::cout << "Choose action:" << std::endl
+                          << "1 - print value" << std::endl
+                          << "2 - set value" << std::endl;
+                std::cin >> ct;
+                switch(ct){
+                    case 1:
+                        entities.at(index)->show(table, std::cout);
+                        break;
+                    case 2:
+                        std::cout << "Enter value to be set: ";
+                        std::cin >> val;
+                        dynamic_cast<Link*>(entities.at(index))->set_instance(table, val);
+                        break;
+                    default:
+                        std::cout << "wrong index, try again!" << std::endl;
+                        break;
+                }
+                break;
+
+            default:
+                throw std::domain_error("unknown entity id");
+        }
+        return 1;
+    }
 
 
 }

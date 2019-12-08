@@ -269,7 +269,7 @@ namespace manager{
         size_t start = this->position.starter_address;
         size_t end = this->position.starter_address + this->position.size;
         for(size_t i = start; i < end; ++i){
-            os << get_single_instance(table, i);
+            os << get_single_instance(table, i) << " ";
         }
         return os;
     }
@@ -329,6 +329,15 @@ namespace manager{
 
     std::ostream& DivSeg::show(const Table& table, std::ostream& os) const {
         return Array::show( table , os);
+    }
+
+
+
+    std::ostream& DivSeg::show_programs(const Table& table, std::ostream& os) const {
+        for(auto it = programs.begin(); it != programs.end(); ++it){
+            os << (*it).get_address() << " ";
+        }
+        return os;
     }
 
 

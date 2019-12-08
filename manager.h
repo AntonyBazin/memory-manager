@@ -64,6 +64,7 @@ namespace manager{
         void set_single_size(size_t sz) { single_size = sz; }
 
         Unit get_pos() const noexcept { return position; };
+        size_t get_single_size() const noexcept { return single_size; }
         size_t get_size() const noexcept { return  position.size; };
         Entity_ID get_entity_id() const noexcept { return e_id; }
         const std::string& get_name() const noexcept { return name; }
@@ -126,7 +127,7 @@ namespace manager{
 
         int d_create_entity();
         int d_free_memory();
-        int d_use_divsegs();
+        int d_use_entity();
         int d_show_all();
         int d_show_divsegs();
         int d_calc_memory();
@@ -137,6 +138,7 @@ namespace manager{
         Program() = delete;
         explicit Program(Table& table, size_t t_mem = 50, std::string t_addr = "default");
         int run();
+        std::string get_address() const noexcept { return file_address; }
         Program(const Program&);
         Program(Program&&) noexcept;
         ~Program();
@@ -220,12 +222,12 @@ namespace manager{
         DivSeg(DivSeg&&) noexcept;
 
         std::ostream& show(const Table&, std::ostream&) const override;
+        std::ostream& show_programs (const Table&, std::ostream&) const;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
         void add_program(Program&);
         void erase_program(Program&);
 
-        void nullify_programs() { this->programs = {}; }
         ~DivSeg() override = default;
     };
 
