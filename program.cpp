@@ -243,7 +243,7 @@ namespace manager{
                 std::cin >> index;
                 try{
                     ptr = entities.at(index)->create_link(new_name);
-                } catch(std::exception &ex){
+                } catch(std::exception& ex){
                     std::cout << ex.what();
                     return 0;
                 }
@@ -254,6 +254,23 @@ namespace manager{
         }
         return 1;
     }
+
+
+
+    int Program::d_free_memory() {
+        size_t index;
+        std::cout << "Enter the number of the entity to free: ";
+        std::cin >> index;
+        try{
+            free_entity(index);
+        } catch(std::exception& ex){
+            std::cout << ex.what();
+            return 0;
+        }
+        return 1;
+    }
+
+
 
 
 }
