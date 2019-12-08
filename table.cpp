@@ -11,7 +11,8 @@ namespace manager{
     Table::Table() {
         memory.insert(memory.begin(), max_size, '\0');
         free_blocks = {};
-        free_blocks.emplace_back(0, max_size);
+        Unit un(0, max_size);
+        free_blocks.emplace_back(un);
     }
 
 

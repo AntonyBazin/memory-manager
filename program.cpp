@@ -134,7 +134,7 @@ namespace manager{
 
 
 
-    Program::Program(Program&& program) noexcept : memory_quota(program.memory_quota){
+    /*Program::Program(Program&& program) noexcept : memory_quota(program.memory_quota){
         this->file_address = program.file_address;
         this->table  = program.table;
         std::move(program.entities.begin(),
@@ -147,7 +147,7 @@ namespace manager{
         fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
-    }
+    }*/
 
 
 
@@ -458,6 +458,56 @@ namespace manager{
         }
         std::cin >> ans;
         return ans;
+    }
+
+
+
+    Program& Program::operator=(const Program& program) {
+        this->file_address = program.file_address;
+        this->table  = program.table;
+        auto it = program.entities.cbegin();  // this is a const iterator
+        for(; it != program.entities.cend(); ++it){
+            this->entities.push_back((*it)->clone());
+        }
+        fptr[0] = nullptr;
+        fptr[1] = &Program::d_create_entity;
+        fptr[2] = &Program::d_free_memory;
+        fptr[3] = &Program::d_use_entity;
+        fptr[4] = &Program::d_show_all;
+        fptr[5] = &Program::d_show_divsegs;
+        return *this;
+    }
+
+
+
+    Program& Program::operator=(Program&& program) noexcept {
+        this->file_address = program.file_address;
+        this->table  = program.table;
+        auto it = program.entities.cbegin();  // this is a const iterator
+        for(; it != program.entities.cend(); ++it){
+            this->entities.push_back((*it)->clone());
+        }
+        fptr[0] = nullptr;
+        fptr[1] = &Program::d_create_entity;
+        fptr[2] = &Program::d_free_memory;
+        fptr[3] = &Program::d_use_entity;
+        fptr[4] = &Program::d_show_all;
+        fptr[5] = &Program::d_show_divsegs;
+        return *this;
+    }
+
+
+
+    bool Program::operator==(const Program& pr) {
+        if(this->memory_quota != pr.memory_quota)
+            return false;
+        if(this->entities != pr.entities)
+            return false;
+        if(this->memory_used() != pr.memory_used())
+            return false;
+        if(this->file_address != pr.file_address)
+            return false;
+        return true;
     }
 
 

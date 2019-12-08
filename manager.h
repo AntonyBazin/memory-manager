@@ -83,8 +83,8 @@ namespace manager{
 
     class Table{
     private:
-        static const int max_size = 300;
-        static std::vector<unsigned char> memory;
+        static const int max_size = 1000;
+        std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
     public:
         Table();
@@ -135,11 +135,14 @@ namespace manager{
 
     public:
         Program() = delete;
-        explicit Program(Table& table, size_t t_mem = 50, std::string t_addr = "default");
+        explicit Program(Table& table, size_t t_mem, std::string t_addr = "default");
+        Program& operator =(const Program&);
+        Program& operator =(Program&&) noexcept;
+        bool operator ==(const Program&);
         int run();
         std::string get_address() const noexcept { return file_address; }
         Program(const Program&);
-        Program(Program&&) noexcept;
+        //Program(Program&&) noexcept;
         ~Program();
     };
 
@@ -147,13 +150,12 @@ namespace manager{
 
     class App{
     private:
+        Table table;
         std::vector<Program> programs;
     public:
-        std::ostream& show_all(std::ostream&);
-        std::ostream& print_prog_memory(std::ostream&, size_t t_index);
-        std::ostream& show_errors(std::ostream&);
-        std::ostream& show_incorrect_links(std::ostream&);
-        void command(std::iostream&);  // for menus
+        void run();
+        void create_program();
+        int command();
     };
 
 

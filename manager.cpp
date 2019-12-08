@@ -285,18 +285,19 @@ namespace manager{
 
 
 
-    void DivSeg::erase_program(Program &pr) noexcept(false) {
+    void DivSeg::erase_program(Program& pr) noexcept(false) {
         if(this->e_id != DivSeg_ID)
             throw std::domain_error("Cannot erase a program of a non-DivSeg element");
-        programs.erase(std::find(programs.begin(), programs.end(), pr));
+        auto pos = std::find(programs.begin(), programs.end(), pr);
+        programs.erase(pos);
     }
 
 
 
     DivSeg::DivSeg(const DivSeg& ds) : Array(ds) {
-        std::move(ds.programs.begin(),
-                  ds.programs.end(),
-                  this->programs.begin());
+        for(const auto program : ds.programs){
+            this->programs.push_back(program);
+        }
     }
 
 
@@ -342,4 +343,64 @@ namespace manager{
     }
 
 
+
+    int App::command() {
+        int i = 0;
+        std::cout << "Which program to run?" << std::endl;
+        try{
+            for(auto pr = programs.begin(); pr != programs.end(); ++pr, ++i){
+                std::cout << i << pr->get_address() << std::endl;
+            }
+        } catch(std::exception& ex){
+            std::cout << ex.what() << std::endl;
+            return 1;
+        }
+        std::cin >> i;
+        try{
+            programs.at(i).run();
+        } catch(std::exception& ex){
+            std::cout << ex.what() << std::endl;
+            return 1;
+        }
+        return 1;
+    }
+
+
+
+    void App::create_program() {
+        size_t q;
+        std::string name;
+        std::cout << "Enter program's name: ";
+        std::cin >> name;
+        std::cout << std::endl << "Enter the program's memory quota: ";
+        std::cin >> q;
+        Program pr(table, 200, name);
+    }
+
+
+
+    void App::run() {
+        int rc = 1;
+        while(rc != 0){
+            std::cout << "What to do?";
+            std::cout << "0 - quit;" << std::endl
+                      << "1 - add program;" << std::endl
+                      << "2 - run program." << std::endl;
+            std::cin >> rc;
+            switch(rc){
+                case 0:
+                    rc = 0;
+                case 1:
+                    create_program();
+                    break;
+                case 2:
+                    command();
+                    break;
+                default:
+                    std::cout << "unexpected input. Try again." << std::endl;
+                    rc = 0;
+            }
+
+        }
+    }
 }
