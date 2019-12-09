@@ -230,7 +230,7 @@ namespace manager{
                     try{
                         ptr = entities.at(index)->create_link(new_name);
                     } catch(std::exception& ex){
-                        std::cout << ex.what();
+                        std::cerr << ex.what();
                         return 0;
                     }
                     add_entity(ptr);
@@ -250,12 +250,20 @@ namespace manager{
 
     int Program::d_free_memory() {
         size_t index;
+        std::cout << "Entities: " << std::endl;
+        for(size_t i = 0; i < entities.size(); ++i){
+            std::cout << i << ") " << entities.at(i)->get_name() << std::endl;
+        }
         std::cout << "Enter the number of the entity to free: ";
+
         std::cin >> index;
         try{
             free_entity(index);
+            std::cout << "Freeing successful" << std::endl;
+        } catch(std::out_of_range& oo){
+            std::cerr << "Incorrect index: " << oo.what() << std::endl;
         } catch(std::exception& ex){
-            std::cerr << ex.what() << std::endl;
+            std::cerr << "Freeing memory: " << ex.what() << std::endl;
             return 0;
         }
         return 1;
@@ -265,9 +273,6 @@ namespace manager{
 
     int Program::d_use_entity() {
         size_t index;  // index of the entity
-        size_t i1, i2;
-        size_t ct;  // controller of action
-        unsigned long long val;
         for(size_t i = 0; i < entities.size(); ++i){
             std::cout << i << ") " << entities.at(i)->get_name() << std::endl;
         }
@@ -275,8 +280,10 @@ namespace manager{
         std::cin >> index;
         try{
             entities.at(index)->run(table, std::cout);
+        } catch(std::out_of_range& oo){
+            std::cerr << "Incorrect index: " << oo.what() << std::endl;
         } catch(std::exception& ex){
-            std::cerr << ex.what() << std::endl;
+            std::cerr << "Use of entity: " << ex.what() << std::endl;
             return 0;
         }
         std::cout << std::endl;
@@ -305,7 +312,7 @@ namespace manager{
                     }
                 }
             } catch(std::exception &ex){
-                std::cout << ex.what() << std::endl;
+                std::cerr << ex.what() << std::endl;
                 return 0;
             }
         return 1;

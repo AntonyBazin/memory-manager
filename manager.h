@@ -6,10 +6,11 @@
 #define MEMORY_MANAGER_MANAGER_H
 
 #include <algorithm>
-#include <utility>  // for std::move to move objects such as string's
+#include <utility>  // for std::move to move objects such as string's, and for std::exception
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <cmath>  // for std::pow
 #include <iostream>
 
 
@@ -215,9 +216,11 @@ namespace manager{
         Entity* create_link(std::string) const override;
         std::ostream& run(Table&, std::ostream&) override;
 
-        unsigned long long get_single_instance(const Table&, size_t t_begin) const;
-        void set_single_instance(Table&, size_t where, unsigned long long what);
-        std::vector<unsigned long long> operator ()(const Table&, size_t t_begin, size_t t_end);
+        unsigned long long get_single_instance(const Table&, size_t t_begin) const noexcept(false);
+        void set_single_instance(Table&, size_t where, unsigned long long what) noexcept(false);
+        std::vector<unsigned long long> operator ()(const Table&,
+                size_t t_begin,
+                size_t t_end) noexcept(false);
         ~Array() override = default;
     };
 

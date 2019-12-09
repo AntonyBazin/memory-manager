@@ -114,8 +114,8 @@ namespace manager{
     std::ostream& Value::run(Table& table, std::ostream& os) {
         size_t ct;
         unsigned long long val;
-        os << std::endl << "Value " << this->get_name();
         while(true){
+            os << std::endl << "Value " << this->get_name() << std::endl;
             os << std::endl << "Choose action:" << std::endl
                << "0 - go back;" << std::endl
                << "1 - print value;" << std::endl
@@ -127,6 +127,7 @@ namespace manager{
                     return os;
                 case 1:
                     this->show(table, std::cout);
+                    os << std::endl;
                     break;
                 case 2:
                     std::cout << "Enter value to be set: ";
@@ -137,9 +138,7 @@ namespace manager{
                     std::cout << "Unexpected choice, try again!" << std::endl;
                     break;
             }
-            return os;
         }
-
     }
 
 
@@ -242,26 +241,34 @@ namespace manager{
     std::ostream& Link::run(Table& table, std::ostream& os) {
         size_t ct;
         unsigned long long val;
-        os << "Link " << this->get_name();
-        os << "Choose action:" << std::endl
-                  << "1 - print value" << std::endl
-                  << "2 - set value" << std::endl;
-        std::cin >> ct;
-        switch(ct){
-            case 1:
-                this->show(table, os);
-                break;
-            case 2:
-                os << "Enter value to be set: ";
-                std::cin >> val;
-                this->set_instance(table, val);
-                os << std::endl;
-                break;
-            default:
-                os << "Unexpected choice, try again!" << std::endl;
-                break;
+
+        while(true){
+            os << "Link " << this->get_name();
+            os << "to " << this->get_core_entity()->get_name() << std::endl << std::endl;
+            os << "Choose action:" << std::endl
+               << "0 - go back;" << std::endl
+               << "1 - print value" << std::endl
+               << "2 - set value" << std::endl;
+            std::cin >> ct;
+            switch(ct){
+                case 0:
+                    os << "Going back..." << std::endl;
+                    return os;
+                case 1:
+                    this->show(table, os);
+                    os << std::endl;
+                    break;
+                case 2:
+                    os << "Enter value to be set: ";
+                    std::cin >> val;
+                    this->set_instance(table, val);
+                    os << std::endl;
+                    break;
+                default:
+                    os << "Unexpected choice, try again!" << std::endl;
+                    break;
+            }
         }
-        return os;
     }
 
 
@@ -275,7 +282,12 @@ namespace manager{
 
 
 
-    void Array::set_single_instance(Table& table, size_t where, unsigned long long what) {
+    void Array::set_single_instance(Table& table, size_t where, unsigned long long what) noexcept(false) {
+        if(where > position.size/single_size)
+            throw std::runtime_error("There is no such element in the array!");
+        if(what > std::pow(2, single_size*8))
+            throw std::runtime_error("The argument is too high to contain!");
+
         size_t size = single_size;
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&what);
@@ -283,13 +295,16 @@ namespace manager{
             c[size - 1 - i] = p[i];
         }
         std::vector<unsigned char> v(c, c + size);
-        table.write(position.starter_address + (size*where), position.size, v);
+        table.write(position.starter_address + (size*where), single_size, v);
     }
 
 
 
 
-    unsigned long long Array::get_single_instance(const Table& table, size_t t_index) const{
+    unsigned long long Array::get_single_instance(const Table& table, size_t t_index) const noexcept(false) {
+        if(t_index > this->position.size / single_size)
+            throw std::runtime_error("Unexpected index to read!");
+
         size_t size = single_size;
         unsigned long long v = 0;
         auto rc = table.read_bytes(position.starter_address + (t_index*size), size);
@@ -302,7 +317,9 @@ namespace manager{
 
 
 
-    std::vector<unsigned long long> Array::operator()(const Table& table, size_t t_begin, size_t t_end) {
+    std::vector<unsigned long long> Array::operator()(const Table& table,
+            size_t t_begin,
+            size_t t_end) noexcept(false) {
         std::vector<unsigned long long> vec;
         for(size_t i = t_begin; i < t_end; i+= single_size){
             vec.push_back(get_single_instance(table, i));
@@ -329,9 +346,10 @@ namespace manager{
     std::ostream& Array::show(const Table& table, std::ostream& os) const {
         size_t start = this->position.starter_address;
         size_t end = this->position.starter_address + this->position.size;
-        for(size_t i = start; i < end; i+= single_size){
+        for(size_t i = (start/single_size); i < (end/single_size); ++i){
             os << get_single_instance(table, i) << " ";
         }
+        os << std::endl;
         return os;
     }
 
@@ -341,44 +359,55 @@ namespace manager{
         size_t ct;
         size_t i1, i2; // indexes
         unsigned long long val;
-        os << "Array " << this->get_name();
-        os << std::endl <<  "Choose action:" << std::endl
-                  << "1 - print values" << std::endl
-                  << "2 - set value by index" << std::endl
-                  << "3 - print value by indexes" << std::endl;
-        std::cin >> ct;
-        switch(ct){
-            case 1:
-                this->show(table, os);
-                break;
-            case 2:
-                os << "Enter index: ";
-                std::cin >> i1;
-                os << "Enter value: ";
-                std::cin >> val;
-                this->set_single_instance(table,
-                        (this->get_single_size()*i1),
-                        val);
-                break;
-            case 3:
-                os << "Enter the start and end indexes: ";
-                std::cin >> i1 >> i2;
-                try{
-                    auto vec = (*this)(table, i1, i2);
-                    os << "The array between " << i1 << " and " << i2 << std::endl;
-                    for(unsigned long long i : vec){
-                        std::cout << " " << i;
-                    }
-                } catch(std::exception& ex){
-                    std::cerr << ex.what() << std::endl;
+
+        while(true){
+            os << "Array " << this->get_name();
+            os << "[" << (this->position.size / single_size) << "]" << std::endl << std::endl;
+            os <<  "Choose action:" << std::endl
+               << "0 - go back;" << std::endl
+               << "1 - print values" << std::endl
+               << "2 - set value by index" << std::endl
+               << "3 - print values by indexes" << std::endl;
+            std::cin >> ct;
+            switch(ct){
+                case 0:
+                    os << "Going back..." << std::endl;
                     return os;
-                }
-                break;
-            default:
-                os << "Unexpected choice, try again!" << std::endl;
-                return os;
+                case 1:
+                    this->show(table, os);
+                    os << std::endl;
+                    break;
+                case 2:
+                    os << "Enter index: ";
+                    std::cin >> i1;
+                    os << "Enter value: ";
+                    std::cin >> val;
+                    try{
+                        this->set_single_instance(table, i1, val);
+                    } catch(std::exception& ex){
+                        std::cerr << "Array::run: " << ex.what() << std::endl;
+                    }
+
+                    break;
+                case 3:
+                    os << "Enter the start and end indexes: ";
+                    std::cin >> i1 >> i2;
+                    try{
+                        auto vec = (*this)(table, i1, i2);
+                        os << "The array between " << i1 << " and " << i2 << std::endl;
+                        for(unsigned long long i : vec){
+                            std::cout << " " << i;
+                        }
+                    } catch(std::exception& ex){
+                        std::cerr << ex.what() << std::endl;
+                        return os;
+                    }
+                    break;
+                default:
+                    os << "Unexpected choice, try again!" << std::endl;
+                    break;
+            }
         }
-        return os;
     }
 
 
@@ -454,48 +483,58 @@ namespace manager{
         size_t ct;
         size_t i1, i2;
         unsigned long long val;
-        os << "DivSeg " << this->get_name();
-        os << std::endl << "Choose action:" << std::endl
-                  << "1 - print values" << std::endl
-                  << "2 - set value by index" << std::endl
-                  << "3 - print value by indexes" << std::endl
-                  << "4 - print programs" << std::endl;
-        std::cin >> ct;
-        switch(ct){
-            case 1:
-                this->show(table, os);
-                break;
-            case 2:
-                os << "Enter index: ";
-                std::cin >> i1;
-                os << "Enter value ";
-                std::cin >> val;
-                this->set_single_instance(table,
-                        (this->get_single_size()*i1),
-                        val);
-                break;
-            case 3:
-                os << "Enter the start and end indexes: ";
-                std::cin >> i1 >> i2;
-                try{
-                    auto vec = (*this)(table, i1, i2);
-                    for(unsigned long long i : vec){
-                        std::cout << " " << i;
-                    }
-                } catch(std::exception& ex){
-                    std::cerr << ex.what() << std::endl;
+
+        while(true){
+            os << "DivSeg " << this->get_name();
+            os << "[" << (this->position.size / single_size) << "]" << std::endl << std::endl;
+            os << "Choose action:" << std::endl
+               << "0 - go back;" << std::endl
+               << "1 - print values" << std::endl
+               << "2 - set value by index" << std::endl
+               << "3 - print values by indexes" << std::endl
+               << "4 - print programs" << std::endl;
+            std::cin >> ct;
+            switch(ct){
+                case 0:
+                    os << "Going back..." << std::endl;
                     return os;
-                }
-                break;
-            case 4:
-                std::cout << "Programs:" << std::endl;
-                this->show_programs(std::cout);
-                break;
-            default:
-                os << "Unexpected choice, try again!" << std::endl;
-                return os;
+                case 1:
+                    this->show(table, os);
+                    os << std::endl;
+                    break;
+                case 2:
+                    os << "Enter index: ";
+                    std::cin >> i1;
+                    os << "Enter value: ";
+                    std::cin >> val;
+                    try{
+                        this->set_single_instance(table, i1, val);
+                    } catch(std::exception& ex){
+                        std::cerr << "In DivSeg::run: " << ex.what() << std::endl;
+                    }
+                    break;
+                case 3:
+                    os << "Enter the start and end indexes: ";
+                    std::cin >> i1 >> i2;
+                    try{
+                        auto vec = (*this)(table, i1, i2);
+                        for(unsigned long long i : vec){
+                            std::cout << " " << i;
+                        }
+                    } catch(std::exception& ex){
+                        std::cerr << ex.what() << std::endl;
+                        return os;
+                    }
+                    break;
+                case 4:
+                    std::cout << "Programs:" << std::endl;
+                    this->show_programs(std::cout);
+                    break;
+                default:
+                    os << "Unexpected choice, try again!" << std::endl;
+                    break;
+            }
         }
-        return os;
     }
 
 
@@ -503,19 +542,14 @@ namespace manager{
     int App::command() {
         int i = 0;
         std::cout << "Which program to run?" << std::endl;
-        try{
-            for(auto pr = programs.begin(); pr != programs.end(); ++pr, ++i){
-                std::cout << i << " " << pr->get_address() << std::endl;
-            }
-        } catch(std::exception& ex){
-            std::cout << ex.what() << std::endl;
-            return 1;
+        for(auto pr = programs.begin(); pr != programs.end(); ++pr, ++i){
+            std::cout << i << " " << pr->get_address() << std::endl;
         }
         std::cin >> i;
         try{
             programs.at(i).run();
         } catch(std::exception& ex){
-            std::cout << ex.what() << std::endl;
+            std::cerr << ex.what() << std::endl;
             return 1;
         }
         return 1;
