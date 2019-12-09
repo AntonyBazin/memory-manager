@@ -43,17 +43,20 @@ namespace manager{
 
 
     Entity* Program::request_memory(size_t t_amount,
+            size_t single_val,
             Entity_ID e_id,
             const std::string& t_name) noexcept(false){
 
-        if(t_amount + memory_used() > memory_quota)
+        if(t_amount*single_val + memory_used() > memory_quota)
             throw std::runtime_error("memory quota reached for this program");
+        if(single_val > sizeof(unsigned long long))
+            throw std::domain_error("elements too big!");
 
         Unit rc;
         Entity* ptr = nullptr;
         try{
-            rc = table.allocate_memory(t_amount);
-            ptr = Entity::generate_Entity(e_id, e_id, t_name);
+            rc = table.allocate_memory(t_amount*single_val);
+            ptr = Entity::generate_Entity(e_id, single_val, t_name);
             ptr->set_pos(rc);
         }
         catch(...){
@@ -134,23 +137,6 @@ namespace manager{
 
 
 
-    /*Program::Program(Program&& program) noexcept : memory_quota(program.memory_quota){
-        this->file_address = program.file_address;
-        this->table  = program.table;
-        std::move(program.entities.begin(),
-                program.entities.end(),
-                this->entities.begin());
-        program.entities.clear();
-        fptr[0] = nullptr;
-        fptr[1] = &Program::d_create_entity;
-        fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_entity;
-        fptr[4] = &Program::d_show_all;
-        fptr[5] = &Program::d_show_divsegs;
-    }*/
-
-
-
     void Program::add_existing_DivSeg(Entity *ent) noexcept(false){
         if(ent->get_entity_id() != DivSeg_ID)
             throw std::domain_error("received a non-DivSeg on adding a DivSeg");
@@ -218,15 +204,15 @@ namespace manager{
                 case 1:
                     std::cout << "Enter the size of the value: ";
                     std::cin >> sz;
-                    ptr = request_memory(sz, Value_ID, new_name);
+                    ptr = request_memory(1, sz, Value_ID, new_name);
                     add_entity(ptr);
                     break;
                 case 2:
                     std::cout << "Enter the size of 1 array element: ";
                     std::cin >> sz;
-                    std::cout << "Enter the length of the array";
+                    std::cout  << std::endl << "Enter the length of the array";
                     std::cin >> amount;
-                    ptr = request_memory((sz*amount), Array_ID, new_name);
+                    ptr = request_memory(amount, sz, Array_ID, new_name);
                     add_entity(ptr);
                     break;
                 case 3:
@@ -234,7 +220,7 @@ namespace manager{
                     std::cin >> sz;
                     std::cout << "Enter the length of the divseg array";
                     std::cin >> amount;
-                    ptr = request_memory((sz*amount), DivSeg_ID, new_name);
+                    ptr = request_memory(amount, sz, DivSeg_ID, new_name);
                     add_entity(ptr);
                     break;
                 case 4:
@@ -253,7 +239,7 @@ namespace manager{
                     break;
             }
         } catch(std::exception& ex){
-            std::cout << ex.what();
+            std::cerr << ex.what() << std::endl;
             return 0;
         }
 
@@ -269,7 +255,7 @@ namespace manager{
         try{
             free_entity(index);
         } catch(std::exception& ex){
-            std::cout << ex.what();
+            std::cerr << ex.what() << std::endl;
             return 0;
         }
         return 1;
@@ -281,143 +267,19 @@ namespace manager{
         size_t index;  // index of the entity
         size_t i1, i2;
         size_t ct;  // controller of action
-        long long val;
-        std::cout << "Enter the number of entity to use: ";
+        unsigned long long val;
+        for(size_t i = 0; i < entities.size(); ++i){
+            std::cout << i << ") " << entities.at(i)->get_name() << std::endl;
+        }
+        std::cout << "Enter the index of entity to use: ";
         std::cin >> index;
         try{
-            entities.at(index);
+            entities.at(index)->run(table, std::cout);
         } catch(std::exception& ex){
-            std::cout << ex.what();
+            std::cerr << ex.what() << std::endl;
             return 0;
         }
-        switch(entities.at(index)->get_entity_id()){
-            case Value_ID:
-                std::cout << "Value " << entities.at(index)->get_name();
-                std::cout << "Choose action:" << std::endl
-                          << "1 - print value" << std::endl
-                          << "2 - set value" << std::endl;
-                std::cin >> ct;
-                switch(ct){
-                    case 1:
-                        entities.at(index)->show(table, std::cout);
-                        break;
-                    case 2:
-                        std::cout << "Enter value to be set: ";
-                        std::cin >> val;
-                        dynamic_cast<Value*>(entities.at(index))->set_instance(table, val);
-                        break;
-                    default:
-                        std::cout << "wrong index, try again!" << std::endl;
-                        break;
-                }
-                break;
-
-            case Array_ID:
-                std::cout << "Array " << entities.at(index)->get_name();
-                std::cout << "Choose action:" << std::endl
-                          << "1 - print values" << std::endl
-                          << "2 - set value by index" << std::endl
-                          << "3 - print value by indexes" << std::endl;
-                std::cin >> ct;
-                switch(ct){
-                    case 1:
-                        entities.at(index)->show(table, std::cout);
-                        break;
-                    case 2:
-                        std::cout << "Enter index: ";
-                        std::cin >> i1;
-                        std::cout << "Enter value ";
-                        std::cin >> val;
-                        dynamic_cast<Array*>(entities.at(index))->set_single_instance(table,
-                                                                                      (entities.at(index)->get_single_size()*i1),
-                                                                                      val);
-                        break;
-                    case 3:
-                        std::cout << "Enter the start and end indexes: ";
-                        std::cin >> i1 >> i2;
-                        try{
-                            auto vec = dynamic_cast<Array*>(entities.at(index))->operator()(table, i1, i2);
-                            for(long long i : vec){
-                                std::cout << " " << i;
-                            }
-                        } catch(std::exception& ex){
-                            std::cout << ex.what();
-                            return 0;
-                        }
-                        break;
-                    default:
-                        std::cout << "unexpected error" << std::endl;
-                        return 0;
-                }
-                break;
-
-            case DivSeg_ID:
-                std::cout << "DivSeg " << entities.at(index)->get_name();
-                std::cout << "Choose action:" << std::endl
-                          << "1 - print values" << std::endl
-                          << "2 - set value by index" << std::endl
-                          << "3 - print value by indexes" << std::endl
-                          << "4 - print programs" << std::endl;
-                std::cin >> ct;
-                switch(ct){
-                    case 1:
-                        entities.at(index)->show(table, std::cout);
-                        break;
-                    case 2:
-                        std::cout << "Enter index: ";
-                        std::cin >> i1;
-                        std::cout << "Enter value ";
-                        std::cin >> val;
-                        dynamic_cast<DivSeg*>(entities.at(index))->set_single_instance(table,
-                                                                                      (entities.at(index)->get_single_size()*i1),
-                                                                                      val);
-                        break;
-                    case 3:
-                        std::cout << "Enter the start and end indexes: ";
-                        std::cin >> i1 >> i2;
-                        try{
-                            auto vec = dynamic_cast<DivSeg*>(entities.at(index))->operator()(table, i1, i2);
-                            for(long long i : vec){
-                                std::cout << " " << i;
-                            }
-                        } catch(std::exception& ex){
-                            std::cout << ex.what();
-                            return 0;
-                        }
-                        break;
-                    case 4:
-                        std::cout << "Programs:" << std::endl;
-                        dynamic_cast<DivSeg*>(entities.at(index))->show_programs(std::cout);
-                        break;
-                    default:
-                        std::cout << "unexpected error" << std::endl;
-                        return 0;
-                }
-                break;
-            case Link_ID:
-                std::cout << "Link " << entities.at(index)->get_name();
-                std::cout << "Choose action:" << std::endl
-                          << "1 - print value" << std::endl
-                          << "2 - set value" << std::endl;
-                std::cin >> ct;
-                switch(ct){
-                    case 1:
-                        entities.at(index)->show(table, std::cout);
-                        break;
-                    case 2:
-                        std::cout << "Enter value to be set: ";
-                        std::cin >> val;
-                        dynamic_cast<Link*>(entities.at(index))->set_instance(table, val);
-                        break;
-                    default:
-                        std::cout << "wrong index, try again!" << std::endl;
-                        break;
-                }
-                break;
-
-            default:
-                throw std::domain_error("unknown entity id");
-        }
+        std::cout << std::endl;
         return 1;
     }
 
@@ -426,7 +288,8 @@ namespace manager{
     int Program::d_show_all() {
         std::cout << "Entities amount: " << entities.size() << std::endl;
         std::cout << "Total memory used: " << memory_used() << std::endl;
-        std::cout << "Of memory quota " << memory_quota;
+        std::cout << "Of memory quota: " << memory_quota << std::endl << std::endl;
+        show_all(std::cout);
         return 1;
     }
 
@@ -442,7 +305,7 @@ namespace manager{
                     }
                 }
             } catch(std::exception &ex){
-                std::cout << ex.what();
+                std::cout << ex.what() << std::endl;
                 return 0;
             }
         return 1;
@@ -450,11 +313,11 @@ namespace manager{
 
 
 
-    int Program::answer(int menus_count, std::string *menus) {
+    int Program::answer(int menus_count, std::string *variants) {
         short ans = 0;
         std::cout << "Choose action: " << std::endl;
         for(int i = 0; i < menus_count; ++i){
-            std::cout << menus[i] << std::endl;
+            std::cout << variants[i] << std::endl;
         }
         std::cin >> ans;
         return ans;

@@ -74,8 +74,8 @@ namespace manager{
         if(mark->size == t_size){
             free_blocks.erase(mark);
         } else{
-            mark->starter_address += t_size;
-            mark->size -= t_size;
+            mark->starter_address += (t_size + 1);
+            mark->size -= (t_size + 1);
         }
 
         Unit pos(strt, t_size);

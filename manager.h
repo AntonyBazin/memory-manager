@@ -57,18 +57,20 @@ namespace manager{
         virtual Entity* clone() const = 0;
         virtual Entity* create_link(std::string) const = 0;
         virtual std::ostream& show(const Table&, std::ostream&) const = 0;
+        virtual std::ostream& run(Table&, std::ostream&) = 0;
 
         void set_id(Entity_ID id) noexcept { e_id = id; }
-        void set_pos(Unit un) noexcept { position = un; };
+        void set_pos(Unit un) noexcept { position = un; }
         void set_name(const std::string& t_name) noexcept { name = t_name; }
         void set_single_size(size_t sz) { single_size = sz; }
 
-        Unit get_pos() const noexcept { return position; };
+        Unit get_pos() const noexcept { return position; }
         size_t get_single_size() const noexcept { return single_size; }
-        size_t get_size() const noexcept { return  position.size; };
+        size_t get_size() const noexcept { return  position.size; }
         Entity_ID get_entity_id() const noexcept { return e_id; }
-        const std::string& get_name() const noexcept { return name; }
+        std::string get_name() const noexcept { return name; }
         size_t get_refs_count() const noexcept { return refs; }
+
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
 
@@ -113,7 +115,10 @@ namespace manager{
         static std::string menu[];  // menus
 
         size_t memory_used() const;   // calculate memory usage
-        Entity* request_memory(size_t t_amount, Entity_ID e_id,
+
+        Entity* request_memory(size_t t_amount,
+                size_t single_val,
+                Entity_ID e_id,
                 const std::string& t_name) noexcept(false);
         void add_entity(Entity*);
 
@@ -130,7 +135,7 @@ namespace manager{
         int d_use_entity();
         int d_show_all();
         int d_show_divsegs();
-        int answer(int menus_count, std::string menus[]);
+        int answer(int menus_count, std::string variants[]);
         int (Program::*fptr[7])();
 
     public:
@@ -142,7 +147,6 @@ namespace manager{
         int run();
         std::string get_address() const noexcept { return file_address; }
         Program(const Program&);
-        //Program(Program&&) noexcept;
         ~Program();
     };
 
@@ -169,8 +173,10 @@ namespace manager{
         std::ostream& show(const Table&, std::ostream&) const override;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
-        long long get_instance(const Table&) const;
-        void set_instance(Table&, long long new_inst) noexcept(false);
+        std::ostream& run(Table&, std::ostream&) override;
+
+        unsigned long long get_instance(const Table&) const;
+        void set_instance(Table&, unsigned long long new_inst) noexcept(false);
         ~Value() override = default;
     };
 
@@ -188,9 +194,10 @@ namespace manager{
         std::ostream& show(const Table&, std::ostream&) const override;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
+        std::ostream& run(Table&, std::ostream&) override;
 
-        long long get_instance(const Table&) const;
-        void set_instance(Table&, long long new_inst, size_t index = 0);
+        unsigned long long get_instance(const Table&) const;
+        void set_instance(Table&, unsigned long long new_inst, size_t index = 0);
         Entity* get_core_entity() const;
         ~Link() override = default;
     };
@@ -206,9 +213,11 @@ namespace manager{
         std::ostream& show(const Table&, std::ostream&) const override;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
-        long long get_single_instance(const Table&, size_t t_begin) const;
-        void set_single_instance(Table&, size_t where, long long what);
-        std::vector<long long> operator ()(const Table&, size_t t_begin, size_t t_end);
+        std::ostream& run(Table&, std::ostream&) override;
+
+        unsigned long long get_single_instance(const Table&, size_t t_begin) const;
+        void set_single_instance(Table&, size_t where, unsigned long long what);
+        std::vector<unsigned long long> operator ()(const Table&, size_t t_begin, size_t t_end);
         ~Array() override = default;
     };
 
@@ -223,9 +232,11 @@ namespace manager{
         DivSeg(DivSeg&&) noexcept;
 
         std::ostream& show(const Table&, std::ostream&) const override;
-        std::ostream& show_programs (std::ostream&) const;
         Entity* clone() const override;
         Entity* create_link(std::string) const override;
+        std::ostream& run(Table&, std::ostream&) override;
+
+        std::ostream& show_programs (std::ostream&) const;
         void add_program(Program&);
         void erase_program(Program&);
 

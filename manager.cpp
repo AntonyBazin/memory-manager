@@ -66,8 +66,8 @@ namespace manager{
 
 
 
-    long long Value::get_instance(const Table& table) const {
-        long long v = 0;
+    unsigned long long Value::get_instance(const Table& table) const {
+        unsigned long long v = 0;
         auto rc = table.read_bytes(position.starter_address, position.size);
         for(size_t i = 0; i < get_size(); ++i){
             v = v | (rc[i] << ((get_size() - 1)*8 - i*8));
@@ -77,7 +77,7 @@ namespace manager{
 
 
 
-    void Value::set_instance(Table& table, long long new_inst) noexcept(false) {
+    void Value::set_instance(Table& table, unsigned long long new_inst) noexcept(false) {
         size_t size = get_size();
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&new_inst);
@@ -105,7 +105,33 @@ namespace manager{
 
 
     std::ostream& Value::show(const Table& table, std::ostream& os) const {
-        os << get_instance(table);
+        os << get_instance(table) << std::endl;
+        return os;
+    }
+
+
+
+    std::ostream& Value::run(Table& table, std::ostream& os) {
+        size_t ct;
+        unsigned long long val;
+        os << std::endl << "Value " << this->get_name();
+        os << std::endl << "Choose action:" << std::endl
+                  << "1 - print value;" << std::endl
+                  << "2 - set value." << std::endl;
+        std::cin >> ct;
+        switch(ct){
+            case 1:
+                this->show(table, std::cout);
+                break;
+            case 2:
+                std::cout << "Enter value to be set: ";
+                std::cin >> val;
+                this->set_instance(table, val);
+                break;
+            default:
+                std::cout << "Unexpected choice, try again!" << std::endl;
+                break;
+        }
         return os;
     }
 
@@ -145,7 +171,7 @@ namespace manager{
 
 
 
-    long long Link::get_instance(const Table& table) const{
+    unsigned long long Link::get_instance(const Table& table) const{
         auto cr = get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
@@ -161,7 +187,7 @@ namespace manager{
 
 
 
-    void Link::set_instance(Table& table, long long new_inst, size_t index) noexcept(false) {
+    void Link::set_instance(Table& table, unsigned long long new_inst, size_t index) noexcept(false) {
         auto cr = get_core_entity();
         switch(cr->get_entity_id()) {
             case Value_ID:
@@ -206,6 +232,33 @@ namespace manager{
 
 
 
+    std::ostream& Link::run(Table& table, std::ostream& os) {
+        size_t ct;
+        unsigned long long val;
+        os << "Link " << this->get_name();
+        os << "Choose action:" << std::endl
+                  << "1 - print value" << std::endl
+                  << "2 - set value" << std::endl;
+        std::cin >> ct;
+        switch(ct){
+            case 1:
+                this->show(table, os);
+                break;
+            case 2:
+                os << "Enter value to be set: ";
+                std::cin >> val;
+                this->set_instance(table, val);
+                os << std::endl;
+                break;
+            default:
+                os << "Unexpected choice, try again!" << std::endl;
+                break;
+        }
+        return os;
+    }
+
+
+
     Array::Array(Array&& arr) noexcept {
         this->e_id = arr.e_id;
         this->name = arr.name;
@@ -215,7 +268,7 @@ namespace manager{
 
 
 
-    void Array::set_single_instance(Table& table, size_t where, long long what) {
+    void Array::set_single_instance(Table& table, size_t where, unsigned long long what) {
         size_t size = single_size;
         unsigned char c[size];
         auto p = reinterpret_cast<unsigned char *>(&what);
@@ -229,9 +282,9 @@ namespace manager{
 
 
 
-    long long Array::get_single_instance(const Table& table, size_t t_index) const{
+    unsigned long long Array::get_single_instance(const Table& table, size_t t_index) const{
         size_t size = single_size;
-        long long v = 0;
+        unsigned long long v = 0;
         auto rc = table.read_bytes(position.starter_address + (t_index*size), size);
 
         for(size_t i = 0; i < size; ++i){
@@ -242,9 +295,9 @@ namespace manager{
 
 
 
-    std::vector<long long> Array::operator()(const Table& table, size_t t_begin, size_t t_end) {
-        std::vector<long long> vec;
-        for(size_t i = t_begin; i < t_end; ++i){
+    std::vector<unsigned long long> Array::operator()(const Table& table, size_t t_begin, size_t t_end) {
+        std::vector<unsigned long long> vec;
+        for(size_t i = t_begin; i < t_end; i+= single_size){
             vec.push_back(get_single_instance(table, i));
         }
         return vec;
@@ -269,8 +322,54 @@ namespace manager{
     std::ostream& Array::show(const Table& table, std::ostream& os) const {
         size_t start = this->position.starter_address;
         size_t end = this->position.starter_address + this->position.size;
-        for(size_t i = start; i < end; ++i){
+        for(size_t i = start; i < end; i+= single_size){
             os << get_single_instance(table, i) << " ";
+        }
+        return os;
+    }
+
+
+
+    std::ostream& Array::run(Table& table, std::ostream& os) {
+        size_t ct;
+        size_t i1, i2; // indexes
+        unsigned long long val;
+        os << "Array " << this->get_name();
+        os << std::endl <<  "Choose action:" << std::endl
+                  << "1 - print values" << std::endl
+                  << "2 - set value by index" << std::endl
+                  << "3 - print value by indexes" << std::endl;
+        std::cin >> ct;
+        switch(ct){
+            case 1:
+                this->show(table, os);
+                break;
+            case 2:
+                os << "Enter index: ";
+                std::cin >> i1;
+                os << "Enter value: ";
+                std::cin >> val;
+                this->set_single_instance(table,
+                        (this->get_single_size()*i1),
+                        val);
+                break;
+            case 3:
+                os << "Enter the start and end indexes: ";
+                std::cin >> i1 >> i2;
+                try{
+                    auto vec = (*this)(table, i1, i2);
+                    os << "The array between " << i1 << " and " << i2 << std::endl;
+                    for(unsigned long long i : vec){
+                        std::cout << " " << i;
+                    }
+                } catch(std::exception& ex){
+                    std::cerr << ex.what() << std::endl;
+                    return os;
+                }
+                break;
+            default:
+                os << "Unexpected choice, try again!" << std::endl;
+                return os;
         }
         return os;
     }
@@ -295,7 +394,7 @@ namespace manager{
 
 
     DivSeg::DivSeg(const DivSeg& ds) : Array(ds) {
-        for(const auto program : ds.programs){
+        for(const auto& program : ds.programs){
             this->programs.push_back(program);
         }
     }
@@ -336,8 +435,58 @@ namespace manager{
 
 
     std::ostream& DivSeg::show_programs(std::ostream& os) const {
-        for(auto it = programs.begin(); it != programs.end(); ++it){
-            os << (*it).get_address() << " ";
+        for(const auto& program : programs){
+            os << program.get_address() << " ";
+        }
+        return os;
+    }
+
+
+
+    std::ostream& DivSeg::run(Table& table, std::ostream& os) {
+        size_t ct;
+        size_t i1, i2;
+        unsigned long long val;
+        os << "DivSeg " << this->get_name();
+        os << std::endl << "Choose action:" << std::endl
+                  << "1 - print values" << std::endl
+                  << "2 - set value by index" << std::endl
+                  << "3 - print value by indexes" << std::endl
+                  << "4 - print programs" << std::endl;
+        std::cin >> ct;
+        switch(ct){
+            case 1:
+                this->show(table, os);
+                break;
+            case 2:
+                os << "Enter index: ";
+                std::cin >> i1;
+                os << "Enter value ";
+                std::cin >> val;
+                this->set_single_instance(table,
+                        (this->get_single_size()*i1),
+                        val);
+                break;
+            case 3:
+                os << "Enter the start and end indexes: ";
+                std::cin >> i1 >> i2;
+                try{
+                    auto vec = (*this)(table, i1, i2);
+                    for(unsigned long long i : vec){
+                        std::cout << " " << i;
+                    }
+                } catch(std::exception& ex){
+                    std::cerr << ex.what() << std::endl;
+                    return os;
+                }
+                break;
+            case 4:
+                std::cout << "Programs:" << std::endl;
+                this->show_programs(std::cout);
+                break;
+            default:
+                os << "Unexpected choice, try again!" << std::endl;
+                return os;
         }
         return os;
     }
@@ -349,7 +498,7 @@ namespace manager{
         std::cout << "Which program to run?" << std::endl;
         try{
             for(auto pr = programs.begin(); pr != programs.end(); ++pr, ++i){
-                std::cout << i << pr->get_address() << std::endl;
+                std::cout << i << " " << pr->get_address() << std::endl;
             }
         } catch(std::exception& ex){
             std::cout << ex.what() << std::endl;
@@ -374,7 +523,8 @@ namespace manager{
         std::cin >> name;
         std::cout << std::endl << "Enter the program's memory quota: ";
         std::cin >> q;
-        Program pr(table, 200, name);
+        Program pr(table, q, name);
+        programs.push_back(pr);
     }
 
 
@@ -382,7 +532,7 @@ namespace manager{
     void App::run() {
         int rc = 1;
         while(rc != 0){
-            std::cout << "What to do?";
+            std::cout << "What to do?" << std::endl;
             std::cout << "0 - quit;" << std::endl
                       << "1 - add program;" << std::endl
                       << "2 - run program." << std::endl;
@@ -390,6 +540,7 @@ namespace manager{
             switch(rc){
                 case 0:
                     rc = 0;
+                    break;
                 case 1:
                     create_program();
                     break;

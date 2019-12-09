@@ -4,8 +4,9 @@
 using namespace manager;
 
 int main() {
-    App ap;
+    Table table;
+    Program pr(table, 300, "file.file");
+    pr.run();
     std::cout << "Hello, World!" << std::endl;
-    ap.run();
     return 0;
 }
