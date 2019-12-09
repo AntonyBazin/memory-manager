@@ -115,24 +115,31 @@ namespace manager{
         size_t ct;
         unsigned long long val;
         os << std::endl << "Value " << this->get_name();
-        os << std::endl << "Choose action:" << std::endl
-                  << "1 - print value;" << std::endl
-                  << "2 - set value." << std::endl;
-        std::cin >> ct;
-        switch(ct){
-            case 1:
-                this->show(table, std::cout);
-                break;
-            case 2:
-                std::cout << "Enter value to be set: ";
-                std::cin >> val;
-                this->set_instance(table, val);
-                break;
-            default:
-                std::cout << "Unexpected choice, try again!" << std::endl;
-                break;
+        while(true){
+            os << std::endl << "Choose action:" << std::endl
+               << "0 - go back;" << std::endl
+               << "1 - print value;" << std::endl
+               << "2 - set value." << std::endl;
+            std::cin >> ct;
+            switch(ct){
+                case 0:
+                    os << "Going back..." << std::endl;
+                    return os;
+                case 1:
+                    this->show(table, std::cout);
+                    break;
+                case 2:
+                    std::cout << "Enter value to be set: ";
+                    std::cin >> val;
+                    this->set_instance(table, val);
+                    break;
+                default:
+                    std::cout << "Unexpected choice, try again!" << std::endl;
+                    break;
+            }
+            return os;
         }
-        return os;
+
     }
 
 

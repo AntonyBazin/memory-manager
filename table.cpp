@@ -20,9 +20,9 @@ namespace manager{
     void Table::defragmentation() {
         std::vector<Unit>::iterator vec_it;  // a cycle is used for full defragmentation
         for(vec_it = free_blocks.begin() + 1; vec_it != free_blocks.end(); ++vec_it){
-            if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size){
+            if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size + 1){
                 --vec_it;
-                size_t sz = (vec_it + 1)->size;
+                size_t sz = (vec_it + 1)->size;  //guaranteed not to fail bc of --vec_it
                 free_blocks.erase(vec_it + 1);
                 vec_it->size += sz;
             }
@@ -36,6 +36,7 @@ namespace manager{
             throw std::out_of_range("starter address below zero");
         if(t_strt > max_size)
             throw std::out_of_range("starter address higher than max size");
+
         auto vec_it = free_blocks.begin();
         for(; vec_it != free_blocks.end(); ++vec_it){  // checks for invalid
             size_t current_start = vec_it->starter_address;
