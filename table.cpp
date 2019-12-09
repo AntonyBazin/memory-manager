@@ -11,7 +11,8 @@ namespace manager{
     Table::Table() {
         memory.insert(memory.begin(), max_size, '\0');
         free_blocks = {};
-        free_blocks.emplace_back(0, max_size);
+        Unit un(0, max_size);
+        free_blocks.emplace_back(un);
     }
 
 
@@ -19,9 +20,9 @@ namespace manager{
     void Table::defragmentation() {
         std::vector<Unit>::iterator vec_it;  // a cycle is used for full defragmentation
         for(vec_it = free_blocks.begin() + 1; vec_it != free_blocks.end(); ++vec_it){
-            if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size){
+            if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size + 1){
                 --vec_it;
-                size_t sz = (vec_it + 1)->size;
+                size_t sz = (vec_it + 1)->size;  //guaranteed not to fail bc of --vec_it
                 free_blocks.erase(vec_it + 1);
                 vec_it->size += sz;
             }
@@ -35,6 +36,7 @@ namespace manager{
             throw std::out_of_range("starter address below zero");
         if(t_strt > max_size)
             throw std::out_of_range("starter address higher than max size");
+
         auto vec_it = free_blocks.begin();
         for(; vec_it != free_blocks.end(); ++vec_it){  // checks for invalid
             size_t current_start = vec_it->starter_address;
@@ -55,7 +57,7 @@ namespace manager{
 
 
 
-    Unit Table::allocate_memory(size_t t_size, Entity_ID id) noexcept(false) {
+    Unit Table::allocate_memory(size_t t_size) noexcept(false) {
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_size](Unit un) -> bool { return un.size >= t_size; });
@@ -73,8 +75,8 @@ namespace manager{
         if(mark->size == t_size){
             free_blocks.erase(mark);
         } else{
-            mark->starter_address += t_size;
-            mark->size -= t_size;
+            mark->starter_address += (t_size + 1);
+            mark->size -= (t_size + 1);
         }
 
         Unit pos(strt, t_size);

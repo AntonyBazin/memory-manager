@@ -6,10 +6,11 @@
 #define MEMORY_MANAGER_MANAGER_H
 
 #include <algorithm>
-#include <utility>  // for std::move to move objects such as string's
+#include <utility>  // for std::move to move objects such as string's, and for std::exception
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <cmath>  // for std::pow
 #include <iostream>
 
 
@@ -20,22 +21,19 @@ namespace manager{
     class Program;
     class App;
     class Entity;
-    template<class T>class Array;
-    template<class T>class Link;
-    template<class T> class Value;
-    template<class T>class DivSeg;
+    class Array;
+    class Link;
+    class Value;
+    class DivSeg;
 
     enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID, E_ERR };
-    enum Type_ID{ CHAR = 0, INT, LONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE, T_ERR };
 
 
     struct Unit{
         size_t starter_address;
         size_t size;
 
-        Unit(size_t t_strt, size_t t_size) :
-        starter_address(t_strt), size(t_size){};
-
+        Unit(size_t t_strt, size_t t_size) : starter_address(t_strt), size(t_size){};
         Unit() : starter_address(0), size(0) {};
     };
 
@@ -44,50 +42,43 @@ namespace manager{
     class Entity{
     protected:
         Entity_ID e_id;
-        Type_ID t_id;
         std::string name;
         Unit position;
         size_t refs;
-        std::vector<Program> programs;
-        virtual std::ostream& show(std::ostream&) const = 0;
+        size_t single_size;
     public:
-        void set_pos(Unit un) noexcept { position = un; };
-        void set_name(std::string t_name) noexcept { name = std::move(t_name); }
-        Unit get_pos() const noexcept { return position; };
-        size_t memory_used() const noexcept { return  position.size; };
-        /*explicit Entity(Unit un, Entity_ID ent_id,
-                Type_ID type_id, std::string nm  = "default_name") :
-                position(un),
-                e_id(ent_id),
-                t_id(type_id),
-                name(std::move(nm)),
-                refs(0) {};*/
-
         Entity() : position({}),
                    e_id(E_ERR),
-                   t_id(T_ERR),
                    name({}),
                    refs(0),
-                   programs({}) {}
+                   single_size(0) {}
+        Entity(const Entity&);
+        Entity(Entity&&) noexcept;
 
+        virtual Entity* clone() const = 0;
+        virtual Entity* create_link(std::string) const = 0;
+        virtual std::ostream& show(const Table&, std::ostream&) const = 0;
+        virtual std::ostream& run(Table&, std::ostream&) = 0;
 
-        Entity_ID get_entity_id() const { return e_id; }
-        Type_ID get_type_id() const { return t_id; }
-        const std::string& get_name() const { return name; }
-        size_t refs_count() const noexcept { return refs; }
+        void set_id(Entity_ID id) noexcept { e_id = id; }
+        void set_pos(Unit un) noexcept { position = un; }
+        void set_name(const std::string& t_name) noexcept { name = t_name; }
+        void set_single_size(size_t sz) { single_size = sz; }
+
+        Unit get_pos() const noexcept { return position; }
+        size_t get_single_size() const noexcept { return single_size; }
+        size_t get_size() const noexcept { return  position.size; }
+        Entity_ID get_entity_id() const noexcept { return e_id; }
+        std::string get_name() const noexcept { return name; }
+        size_t get_refs_count() const noexcept { return refs; }
+
         void increment_refs() noexcept { ++refs; }
         void decrement_refs() noexcept { --refs; }
-        void add_program(Program& pr) noexcept(false); //todo
-        void erase_program(Program& pr) noexcept(false);
 
         static Entity* generate_Entity(Entity_ID e_id,
-                Type_ID type,
+                size_t single_size,
                 const std::string& t_name = "def") noexcept(false);
 
-        template<class T> static Entity* create_Entity(Entity_ID id,
-                std::string t_name = "def") noexcept(false);
-
-        template <class T> Entity* create_link(const std::string& t_name = "def_lnk") const;
         virtual ~Entity() = default;
     };
 
@@ -95,14 +86,14 @@ namespace manager{
 
     class Table{
     private:
-        static const int max_size = 300;
-        static std::vector<unsigned char> memory;
+        static const int max_size = 1000;
+        std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
     public:
         Table();
         void defragmentation();   // obvious
         void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
-        Unit allocate_memory(size_t t_size, Entity_ID id);
+        Unit allocate_memory(size_t t_size);
 
         std::vector<unsigned char> read_bytes(size_t t_strt,
                 size_t t_size) const noexcept(false);
@@ -124,34 +115,39 @@ namespace manager{
         static const int menus;  // menus amount
         static std::string menu[];  // menus
 
-        size_t get_memory_used() const;   // calculate memory usage
-        Entity* request_memory(size_t t_amount, Type_ID t_id, Entity_ID e_id,
+        size_t memory_used() const;   // calculate memory usage
+
+        Entity* request_memory(size_t t_amount,
+                size_t single_val,
+                Entity_ID e_id,
                 const std::string& t_name) noexcept(false);
+        void add_entity(Entity*);
 
         void free_entity(size_t t_index) noexcept(false);
         void free_all_memory() noexcept;
-        void add_existing_DivSeg(Entity*) noexcept(false);
+        void add_existing_DivSeg(Entity*) noexcept(false); //todo include in dialogue
         void refuse_div_seg(Entity*) noexcept(false);
-        std::vector<Entity*> get_div_segs() const noexcept;
+        std::vector<Entity*> get_div_segs() noexcept;
 
         std::ostream& show_all(std::ostream&) const;
 
-        int d_request_memory(Table&);
-        int d_free_memory(Table&);
-        int d_use_divsegs(Table&);
-        int d_show_all(Table&);
-        int d_show_divsegs(Table&);
-        int d_calc_memory(Table&);
-        int answer(int menus_count, std::string menus[]);
-        int (Program::*fptr[7])(Table&);
+        int d_create_entity();
+        int d_free_memory();
+        int d_use_entity();
+        int d_show_all();
+        int d_show_divsegs();
+        int answer(int menus_count, std::string variants[]);
+        int (Program::*fptr[7])();
 
     public:
         Program() = delete;
-        explicit Program(Table& table, size_t t_mem = 50, std::string t_addr = "default");
+        explicit Program(Table& table, size_t t_mem, std::string t_addr = "default");
+        Program& operator =(const Program&);
+        Program& operator =(Program&&) noexcept;
+        bool operator ==(const Program&);
         int run();
-        Program clone();
+        std::string get_address() const noexcept { return file_address; }
         Program(const Program&);
-        Program(Program&&) noexcept;
         ~Program();
     };
 
@@ -159,69 +155,95 @@ namespace manager{
 
     class App{
     private:
+        Table table;
         std::vector<Program> programs;
     public:
-        std::ostream& show_all(std::ostream&);
-        std::ostream& print_prog_memory(std::ostream&, size_t t_index);
-        std::ostream& show_errors(std::ostream&);
-        std::ostream& show_incorrect_links(std::ostream&);
-        void command(std::iostream&);  // for menus
+        void run();
+        void create_program();
+        int command();
     };
 
 
 
-    template<class T>
     class Value : public Entity{
-    protected:
-        std::ostream& show(std::ostream&) const override;
     public:
         Value() = default;
-        size_t get_size();
-        T get_instance(Table&);
-        void set_instance(Table&, T new_inst) noexcept(false);
+        Value(const Value&) = default;
+        Value(Value&&) noexcept;
+
+        std::ostream& show(const Table&, std::ostream&) const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
+        std::ostream& run(Table&, std::ostream&) override;
+
+        unsigned long long get_instance(const Table&) const;
+        void set_instance(Table&, unsigned long long new_inst) noexcept(false);
         ~Value() override = default;
     };
 
 
 
-    template<class T>
     class Link : public Entity{
     private:
         Entity* ptr;
-    protected:
-        std::ostream& show(std::ostream&) const;
     public:
-        explicit Link(const Entity*);
-        T get_instance(Table&);
-        void set_instance(Table&, T new_inst, size_t index = 0);
-        Entity* get_core_entity();
+        Link() = delete;
+        explicit Link(Entity*, std::string t_name = "link_name");
+        Link(const Link&);
+        Link(Link&&) noexcept;
+
+        std::ostream& show(const Table&, std::ostream&) const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
+        std::ostream& run(Table&, std::ostream&) override;
+
+        unsigned long long get_instance(const Table&) const;
+        void set_instance(Table&, unsigned long long new_inst, size_t index = 0);
+        Entity* get_core_entity() const;
+        ~Link() override = default;
     };
 
 
 
-    template<class T>
     class Array : public Entity{
-    protected:
-        std::ostream& show(std::ostream&) const;
-
     public:
         Array() = default;
-        T get_single_instance(Table&, size_t t_begin) const;
-        void set_single_instance(Table&, size_t where, T what);
-        std::vector<T> operator ()(Table&, size_t t_begin, size_t t_end);
+        Array(const Array&) = default;
+        Array(Array&&) noexcept;
+
+        std::ostream& show(const Table&, std::ostream&) const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
+        std::ostream& run(Table&, std::ostream&) override;
+
+        unsigned long long get_single_instance(const Table&, size_t t_begin) const noexcept(false);
+        void set_single_instance(Table&, size_t where, unsigned long long what) noexcept(false);
+        std::vector<unsigned long long> operator ()(const Table&,
+                size_t t_begin,
+                size_t t_end) noexcept(false);
         ~Array() override = default;
     };
 
 
 
-    template<class T>
-    class DivSeg : public Array<T>{
+    class DivSeg : public Array{
     protected:
-        std::ostream& show(std::ostream&) const override;
+        std::vector<Program> programs;
     public:
         DivSeg() = default;
-        void nullify_programs() { this->programs = {}; }
-        ~DivSeg() = default;
+        DivSeg(const DivSeg&);
+        DivSeg(DivSeg&&) noexcept;
+
+        std::ostream& show(const Table&, std::ostream&) const override;
+        Entity* clone() const override;
+        Entity* create_link(std::string) const override;
+        std::ostream& run(Table&, std::ostream&) override;
+
+        std::ostream& show_programs (std::ostream&) const;
+        void add_program(Program&);
+        void erase_program(Program&);
+
+        ~DivSeg() override = default;
     };
 
 }

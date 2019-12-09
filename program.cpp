@@ -8,19 +8,19 @@
 namespace manager{
 
     std::string Program::menu[] = {"0. Stop controlling this program",
-                                   "1. Request memory",
+                                   "1. Request memory for an entity",
                                    "2. Free memory",
-                                   "3. Use div segments",
+                                   "3. Work with entity",
                                    "4. Show all memory info",
-                                   "5. Show div segments",
-                                   "6. Calculate total memory used"};
+                                   "5. Show div segments"};
+
     const int Program::menus = sizeof(menu)/sizeof(menu[0]);
 
 
     int Program::run() {
         int rc;
         while((rc = answer(menus, menu))){
-            (this->*fptr[rc])(table);
+            (this->*fptr[rc])();
         }
         std::cout << "That's all. Bye!" << std::endl;
         return 0;
@@ -33,31 +33,43 @@ namespace manager{
         file_address = std::move(t_addr);
         entities = {};
         fptr[0] = nullptr;
-        fptr[1] = &Program::d_request_memory;
+        fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_divsegs;
+        fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
-        fptr[6] = &Program::d_calc_memory;
     }
 
 
-    Entity* Program::request_memory(size_t t_amount, Type_ID t_id,
-            Entity_ID e_id, const std::string& t_name) noexcept(false) {
+
+    Entity* Program::request_memory(size_t t_amount,
+            size_t single_val,
+            Entity_ID e_id,
+            const std::string& t_name) noexcept(false){
+
+        if(t_amount*single_val + memory_used() > memory_quota)
+            throw std::runtime_error("memory quota reached for this program");
+        if(single_val > sizeof(unsigned long long))
+            throw std::domain_error("elements too big!");
 
         Unit rc;
         Entity* ptr = nullptr;
         try{
-            rc = table.allocate_memory(t_amount, e_id);
-            ptr = Entity::generate_Entity(e_id, t_id, t_name);
+            rc = table.allocate_memory(t_amount*single_val);
+            ptr = Entity::generate_Entity(e_id, single_val, t_name);
             ptr->set_pos(rc);
         }
         catch(...){
             throw;
         }
-        entities.emplace_back(ptr);
-        ptr->increment_refs();
         return ptr;
+    }
+
+
+
+    void Program::add_entity(Entity* ent) {
+        entities.emplace_back(ent);
+        ent->increment_refs();
     }
 
 
@@ -66,7 +78,7 @@ namespace manager{
         Unit pos = entities.at(t_index)->get_pos();
         auto mark = entities.begin() + t_index;
         (*mark)->decrement_refs();
-        if(!(*mark)->refs_count()){  // check whether entity is now free
+        if(!(*mark)->get_refs_count()){  // check whether entity is now free
             delete (*mark);  // if it has no refs any more than delete it
             table.mark_free(pos.starter_address, pos.size); // and mark as free
         }
@@ -75,11 +87,11 @@ namespace manager{
 
 
 
-    size_t Program::get_memory_used() const {
+    size_t Program::memory_used() const {
         size_t sz = 0;
         std::for_each(entities.begin(),
                 entities.end(),
-                [&sz](Entity* en) { sz += en->memory_used(); });
+                [&sz](Entity* en) { sz += en->get_size(); });
         return sz;
     }
 
@@ -90,7 +102,7 @@ namespace manager{
         for(; vec_it != entities.end(); ++vec_it){
             Unit current_pos = (*vec_it)->get_pos();
             (*vec_it)->decrement_refs();
-            if(!(*vec_it)->refs_count()){
+            if(!(*vec_it)->get_refs_count()){
                 table.mark_free(current_pos.starter_address, current_pos.size);
                 delete (*vec_it);
             }
@@ -108,50 +120,19 @@ namespace manager{
 
 
 
-    Program Program::clone() {
-        Program clone(*this);
-        return clone;
-    }
-
-
-
     Program::Program(const Program& program) : memory_quota(program.memory_quota) {
         this->file_address = program.file_address;
         this->table  = program.table;
         auto it = program.entities.cbegin();  // this is a const iterator
         for(; it != program.entities.cend(); ++it){
-            this->entities.push_back(Entity::generate_Entity((*it)->get_entity_id(),
-                    (*it)->get_type_id(), (*it)->get_name()));
+            this->entities.push_back((*it)->clone());
         }
         fptr[0] = nullptr;
-        fptr[1] = &Program::d_request_memory;
+        fptr[1] = &Program::d_create_entity;
         fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_divsegs;
+        fptr[3] = &Program::d_use_entity;
         fptr[4] = &Program::d_show_all;
         fptr[5] = &Program::d_show_divsegs;
-        fptr[6] = &Program::d_calc_memory;
-    }
-
-
-
-    Program::Program(Program&& program) noexcept : memory_quota(program.memory_quota){
-        this->file_address = program.file_address;
-        this->table  = program.table;
-        std::move(program.entities.begin(),
-                program.entities.end(),
-                this->entities.begin());
-        /*auto it = program.entities.begin();  // this is a const iterator
-        for(; it != program.entities.end(); ++it){
-            this->entities.push_back(*it);
-        }*/
-        program.entities.clear();
-        fptr[0] = nullptr;
-        fptr[1] = &Program::d_request_memory;
-        fptr[2] = &Program::d_free_memory;
-        fptr[3] = &Program::d_use_divsegs;
-        fptr[4] = &Program::d_show_all;
-        fptr[5] = &Program::d_show_divsegs;
-        fptr[6] = &Program::d_calc_memory;
     }
 
 
@@ -159,9 +140,10 @@ namespace manager{
     void Program::add_existing_DivSeg(Entity *ent) noexcept(false){
         if(ent->get_entity_id() != DivSeg_ID)
             throw std::domain_error("received a non-DivSeg on adding a DivSeg");
-        ent->add_program(*this);
-        ent->increment_refs();
-        entities.push_back(ent);
+        auto d_ptr = dynamic_cast<DivSeg*>(ent);
+        d_ptr->add_program(*this);
+        d_ptr->increment_refs();
+        entities.push_back(d_ptr);
     }
 
 
@@ -169,17 +151,19 @@ namespace manager{
     void Program::refuse_div_seg(Entity* ent) noexcept(false) {
         if(ent->get_entity_id() != DivSeg_ID)
             throw std::domain_error("received a non-DivSeg on refusing a DivSeg");
-        ent->erase_program(*this);
-        ent->decrement_refs();
-        if(!(ent->refs_count())){
-            delete ent;
+        auto d_ptr = dynamic_cast<DivSeg*>(ent);
+        d_ptr->erase_program(*this);
+        d_ptr->decrement_refs();
+        entities.erase(std::find(entities.begin(),
+                entities.end(), d_ptr));
+        if(!(d_ptr->get_refs_count())){
+            delete d_ptr;
         }
-        entities.erase(std::find(entities.begin(), entities.end(), ent));
     }
 
 
 
-    std::vector<Entity *> Program::get_div_segs() const noexcept {
+    std::vector<Entity *> Program::get_div_segs() noexcept {
         auto iter = entities.begin();
         std::vector<Entity*> res = {};
         for(; iter != entities.end(); ++iter){
@@ -188,6 +172,212 @@ namespace manager{
             }
         }
         return res;
+    }
+
+
+
+    std::ostream& Program::show_all(std::ostream& os) const {
+        for(auto entity : entities){
+            entity->show(table, os);
+        }
+        return os;
+    }
+
+
+
+    int Program::d_create_entity() {
+        size_t rc;   // deciding the type of the entity
+        size_t sz;  // for size of 1 element
+        size_t amount;  // for array-based classes
+        size_t index;  // for links
+        std::string new_name;  // for the name
+        Entity* ptr;
+        std::cout << "Enter the parameters of the new entity:" << std::endl;
+        std::cout << "Choose the type of the entity:" << std::endl;
+        std::cout << "1 - single value,\n2 - array,\n3 - divseg,\n4 - link.";
+        std::cin >> rc;
+        std::cout << "Enter the name of the entity: ";
+        std::cin >> new_name;
+
+        try{
+            switch(rc){
+                case 1:
+                    std::cout << "Enter the size of the value: ";
+                    std::cin >> sz;
+                    ptr = request_memory(1, sz, Value_ID, new_name);
+                    add_entity(ptr);
+                    break;
+                case 2:
+                    std::cout << "Enter the size of 1 array element: ";
+                    std::cin >> sz;
+                    std::cout  << std::endl << "Enter the length of the array";
+                    std::cin >> amount;
+                    ptr = request_memory(amount, sz, Array_ID, new_name);
+                    add_entity(ptr);
+                    break;
+                case 3:
+                    std::cout << "Enter the size of 1 divseg array element: ";
+                    std::cin >> sz;
+                    std::cout << "Enter the length of the divseg array";
+                    std::cin >> amount;
+                    ptr = request_memory(amount, sz, DivSeg_ID, new_name);
+                    add_entity(ptr);
+                    break;
+                case 4:
+                    std::cout << "Enter the number of the existing entity"
+                              << std::endl << " to create a link to: ";
+                    std::cin >> index;
+                    try{
+                        ptr = entities.at(index)->create_link(new_name);
+                    } catch(std::exception& ex){
+                        std::cerr << ex.what();
+                        return 0;
+                    }
+                    add_entity(ptr);
+                    break;
+                default:
+                    break;
+            }
+        } catch(std::exception& ex){
+            std::cerr << ex.what() << std::endl;
+            return 0;
+        }
+
+        return 1;
+    }
+
+
+
+    int Program::d_free_memory() {
+        size_t index;
+        std::cout << "Entities: " << std::endl;
+        for(size_t i = 0; i < entities.size(); ++i){
+            std::cout << i << ") " << entities.at(i)->get_name() << std::endl;
+        }
+        std::cout << "Enter the number of the entity to free: ";
+
+        std::cin >> index;
+        try{
+            free_entity(index);
+            std::cout << "Freeing successful" << std::endl;
+        } catch(std::out_of_range& oo){
+            std::cerr << "Incorrect index: " << oo.what() << std::endl;
+        } catch(std::exception& ex){
+            std::cerr << "Freeing memory: " << ex.what() << std::endl;
+            return 0;
+        }
+        return 1;
+    }
+
+
+
+    int Program::d_use_entity() {
+        size_t index;  // index of the entity
+        for(size_t i = 0; i < entities.size(); ++i){
+            std::cout << i << ") " << entities.at(i)->get_name() << std::endl;
+        }
+        std::cout << "Enter the index of entity to use: ";
+        std::cin >> index;
+        try{
+            entities.at(index)->run(table, std::cout);
+        } catch(std::out_of_range& oo){
+            std::cerr << "Incorrect index: " << oo.what() << std::endl;
+        } catch(std::exception& ex){
+            std::cerr << "Use of entity: " << ex.what() << std::endl;
+            return 0;
+        }
+        std::cout << std::endl;
+        return 1;
+    }
+
+
+
+    int Program::d_show_all() {
+        std::cout << "Entities amount: " << entities.size() << std::endl;
+        std::cout << "Total memory used: " << memory_used() << std::endl;
+        std::cout << "Of memory quota: " << memory_quota << std::endl << std::endl;
+        show_all(std::cout);
+        return 1;
+    }
+
+
+
+    int Program::d_show_divsegs() {
+            try{
+                for(auto entity : get_div_segs()){
+                    if(entity->get_entity_id() == DivSeg_ID){
+                        entity->show(table, std::cout);
+                        std::cout << std::endl;
+                        dynamic_cast<DivSeg*>(entity)->show_programs(std::cout);
+                    }
+                }
+            } catch(std::exception &ex){
+                std::cerr << ex.what() << std::endl;
+                return 0;
+            }
+        return 1;
+    }
+
+
+
+    int Program::answer(int menus_count, std::string *variants) {
+        short ans = 0;
+        std::cout << "Choose action: " << std::endl;
+        for(int i = 0; i < menus_count; ++i){
+            std::cout << variants[i] << std::endl;
+        }
+        std::cin >> ans;
+        return ans;
+    }
+
+
+
+    Program& Program::operator=(const Program& program) {
+        this->file_address = program.file_address;
+        this->table  = program.table;
+        auto it = program.entities.cbegin();  // this is a const iterator
+        for(; it != program.entities.cend(); ++it){
+            this->entities.push_back((*it)->clone());
+        }
+        fptr[0] = nullptr;
+        fptr[1] = &Program::d_create_entity;
+        fptr[2] = &Program::d_free_memory;
+        fptr[3] = &Program::d_use_entity;
+        fptr[4] = &Program::d_show_all;
+        fptr[5] = &Program::d_show_divsegs;
+        return *this;
+    }
+
+
+
+    Program& Program::operator=(Program&& program) noexcept {
+        this->file_address = program.file_address;
+        this->table  = program.table;
+        auto it = program.entities.cbegin();  // this is a const iterator
+        for(; it != program.entities.cend(); ++it){
+            this->entities.push_back((*it)->clone());
+        }
+        fptr[0] = nullptr;
+        fptr[1] = &Program::d_create_entity;
+        fptr[2] = &Program::d_free_memory;
+        fptr[3] = &Program::d_use_entity;
+        fptr[4] = &Program::d_show_all;
+        fptr[5] = &Program::d_show_divsegs;
+        return *this;
+    }
+
+
+
+    bool Program::operator==(const Program& pr) {
+        if(this->memory_quota != pr.memory_quota)
+            return false;
+        if(this->entities != pr.entities)
+            return false;
+        if(this->memory_used() != pr.memory_used())
+            return false;
+        if(this->file_address != pr.file_address)
+            return false;
+        return true;
     }
 
 
