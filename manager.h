@@ -7,14 +7,14 @@
 
 #include <algorithm>
 #include <utility>  // for std::move to move objects such as string's, and for std::exception
-#include <vector>
+#include "myvector.h"
 #include <string>
 #include <stdexcept>
 #include <cmath>  // for std::pow
 #include <iostream>
 
 
-
+using namespace my_vector;
 namespace manager{
 
     class Table;

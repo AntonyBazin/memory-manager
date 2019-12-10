@@ -1,4 +1,3 @@
-#include <iostream>
 #include "manager.h"
 
 using namespace manager;
