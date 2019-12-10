@@ -66,7 +66,7 @@ namespace manager{
             defragmentation();
             mark = std::find_if(free_blocks.begin(),
                                 free_blocks.end(),
-                                [t_size](Unit un) -> bool { return un.size > t_size; });
+                                [t_size](Unit un) -> bool { return un.size >= t_size; });
             if(mark == free_blocks.end()) throw std::runtime_error("not enough memory");
         }
 
@@ -75,8 +75,8 @@ namespace manager{
         if(mark->size == t_size){
             free_blocks.erase(mark);
         } else{
-            mark->starter_address += (t_size + 1);
-            mark->size -= (t_size + 1);
+            mark->starter_address += t_size;
+            mark->size -= t_size;
         }
 
         Unit pos(strt, t_size);

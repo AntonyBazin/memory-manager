@@ -21,14 +21,14 @@ namespace manager{
         int rc;
         while((rc = answer(menus, menu))){
             (this->*fptr[rc])();
+            std::cout << std::endl;
         }
-        std::cout << "That's all. Bye!" << std::endl;
         return 0;
     }
 
 
 
-    Program::Program(Table& tbl, size_t t_mem, std::string t_addr) : memory_quota(t_mem) {
+    Program::Program(Table* tbl, size_t t_mem, std::string t_addr) : memory_quota(t_mem) {
         table = tbl;
         file_address = std::move(t_addr);
         entities = {};
@@ -55,7 +55,7 @@ namespace manager{
         Unit rc;
         Entity* ptr = nullptr;
         try{
-            rc = table.allocate_memory(t_amount*single_val);
+            rc = table->allocate_memory(t_amount*single_val);
             ptr = Entity::generate_Entity(e_id, single_val, t_name);
             ptr->set_pos(rc);
         }
@@ -67,9 +67,16 @@ namespace manager{
 
 
 
-    void Program::add_entity(Entity* ent) {
+    void Program::add_entity(Entity* ent) noexcept(false) {
+        if(std::find(entities.begin(), entities.end(), ent) != entities.end())
+            throw std::invalid_argument("Entity already exists in this program!");
+
         entities.emplace_back(ent);
         ent->increment_refs();
+        if(ent->get_entity_id() == DivSeg_ID){
+            auto d_ptr = dynamic_cast<DivSeg*>(ent);
+            d_ptr->add_program(this);
+        }
     }
 
 
@@ -78,11 +85,16 @@ namespace manager{
         Unit pos = entities.at(t_index)->get_pos();
         auto mark = entities.begin() + t_index;
         (*mark)->decrement_refs();
+        if((*mark)->get_entity_id() == DivSeg_ID){  // if it is a DivSeg don't forget
+            auto d_ptr = dynamic_cast<DivSeg*>((*mark));   // to erase the link to this program
+            d_ptr->erase_program(this);
+        }
         if(!(*mark)->get_refs_count()){  // check whether entity is now free
             delete (*mark);  // if it has no refs any more than delete it
-            table.mark_free(pos.starter_address, pos.size); // and mark as free
+            table->mark_free(pos.starter_address, pos.size); // and mark as free
         }
         entities.erase(mark); // delete from this programs entities anyway
+        check_links(pos);
     }
 
 
@@ -91,19 +103,21 @@ namespace manager{
         size_t sz = 0;
         std::for_each(entities.begin(),
                 entities.end(),
-                [&sz](Entity* en) { sz += en->get_size(); });
+                [&sz](Entity* en) { if(en->get_entity_id() != Link_ID){ sz += en->get_size(); } });
         return sz;
     }
 
 
 
-    void Program::free_all_memory() noexcept{
+    void Program::free_all_memory() noexcept {
         auto vec_it = entities.begin();
         for(; vec_it != entities.end(); ++vec_it){
             Unit current_pos = (*vec_it)->get_pos();
             (*vec_it)->decrement_refs();
             if(!(*vec_it)->get_refs_count()){
-                table.mark_free(current_pos.starter_address, current_pos.size);
+                try{
+                    table->mark_free(current_pos.starter_address, current_pos.size);
+                } catch(...){ }
                 delete (*vec_it);
             }
         }
@@ -137,33 +151,21 @@ namespace manager{
 
 
 
-    void Program::add_existing_DivSeg(Entity *ent) noexcept(false){
+    void Program::add_existing_DivSeg(Entity* ent) noexcept(false){
         if(ent->get_entity_id() != DivSeg_ID)
             throw std::domain_error("received a non-DivSeg on adding a DivSeg");
+        if(ent->get_size() + memory_used() > memory_quota)
+            throw std::invalid_argument("Received DivSeg is too big");
+
         auto d_ptr = dynamic_cast<DivSeg*>(ent);
-        d_ptr->add_program(*this);
+        d_ptr->add_program(this);
         d_ptr->increment_refs();
         entities.push_back(d_ptr);
     }
 
 
 
-    void Program::refuse_div_seg(Entity* ent) noexcept(false) {
-        if(ent->get_entity_id() != DivSeg_ID)
-            throw std::domain_error("received a non-DivSeg on refusing a DivSeg");
-        auto d_ptr = dynamic_cast<DivSeg*>(ent);
-        d_ptr->erase_program(*this);
-        d_ptr->decrement_refs();
-        entities.erase(std::find(entities.begin(),
-                entities.end(), d_ptr));
-        if(!(d_ptr->get_refs_count())){
-            delete d_ptr;
-        }
-    }
-
-
-
-    std::vector<Entity *> Program::get_div_segs() noexcept {
+    std::vector<Entity*> Program::get_div_segs() noexcept {
         auto iter = entities.begin();
         std::vector<Entity*> res = {};
         for(; iter != entities.end(); ++iter){
@@ -176,9 +178,10 @@ namespace manager{
 
 
 
-    std::ostream& Program::show_all(std::ostream& os) const {
+    std::ostream& Program::show_all(std::ostream& os) const noexcept {
         for(auto entity : entities){
-            entity->show(table, os);
+            entity->show(*table, os);
+            os << std::endl;
         }
         return os;
     }
@@ -224,8 +227,12 @@ namespace manager{
                     add_entity(ptr);
                     break;
                 case 4:
+                    std::cout << "Registered entities:" << std::endl;
+                    for(size_t i = 0; i < entities.size(); ++i){
+                        std::cout << i << ") " << entities.at(i)->get_name() << std::endl;
+                    }
                     std::cout << "Enter the number of the existing entity"
-                              << std::endl << " to create a link to: ";
+                              << std::endl << "to create a link to: ";
                     std::cin >> index;
                     try{
                         ptr = entities.at(index)->create_link(new_name);
@@ -279,7 +286,7 @@ namespace manager{
         std::cout << "Enter the index of entity to use: ";
         std::cin >> index;
         try{
-            entities.at(index)->run(table, std::cout);
+            entities.at(index)->run(*table, std::cout);
         } catch(std::out_of_range& oo){
             std::cerr << "Incorrect index: " << oo.what() << std::endl;
         } catch(std::exception& ex){
@@ -306,8 +313,7 @@ namespace manager{
             try{
                 for(auto entity : get_div_segs()){
                     if(entity->get_entity_id() == DivSeg_ID){
-                        entity->show(table, std::cout);
-                        std::cout << std::endl;
+                        entity->show(*table, std::cout);
                         dynamic_cast<DivSeg*>(entity)->show_programs(std::cout);
                     }
                 }
@@ -378,6 +384,22 @@ namespace manager{
         if(this->file_address != pr.file_address)
             return false;
         return true;
+    }
+
+
+
+    void Program::check_links(const Unit guard) {
+        for(size_t i = 0; i < entities.size(); ++i){
+            size_t sz = entities.size();
+            if(entities.at(i)->get_entity_id() == Link_ID &&
+            guard == (entities.at(i)->get_pos())){
+                std::cerr << "Invalid Link: "
+                              << entities.at(i)->get_name()
+                              << std::endl;
+                entities.erase(entities.begin() + i);
+                i = -1;
+            }
+        }
     }
 
 

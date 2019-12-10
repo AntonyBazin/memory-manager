@@ -105,7 +105,8 @@ namespace manager{
 
 
     std::ostream& Value::show(const Table& table, std::ostream& os) const {
-        os << get_instance(table) << std::endl;
+        os << get_name() << ":" << std::endl
+           << get_instance(table) << std::endl;
         return os;
     }
 
@@ -169,7 +170,7 @@ namespace manager{
 
     Link::Link(Entity* ent , std::string t_name) {
         this->position = ent->get_pos();
-        this->e_id = ent->get_entity_id();
+        this->e_id = Link_ID;
         this->refs = 0;
         this->ptr = ent;
         this->name = std::move(t_name);
@@ -198,10 +199,13 @@ namespace manager{
         switch(cr->get_entity_id()) {
             case Value_ID:
                 (dynamic_cast<Value*>(cr))->set_instance(table, new_inst);
+                break;
             case Array_ID:
                 (dynamic_cast<Array*>(cr))->set_single_instance(table, index, new_inst);
+                break;
             case DivSeg_ID:
                 (dynamic_cast<DivSeg*>(cr))->set_single_instance(table, index, new_inst);
+                break;
             default:
                 throw std::domain_error("unexpected core entity on setter");
         }
@@ -232,7 +236,8 @@ namespace manager{
 
 
     std::ostream& Link::show(const Table& table, std::ostream& os) const {
-        os << get_instance(table);
+        os << get_name() << ":" << std::endl
+           << get_instance(table) << std::endl;
         return os;
     }
 
@@ -244,7 +249,7 @@ namespace manager{
 
         while(true){
             os << "Link " << this->get_name();
-            os << "to " << this->get_core_entity()->get_name() << std::endl << std::endl;
+            os << " to " << this->get_core_entity()->get_name() << std::endl << std::endl;
             os << "Choose action:" << std::endl
                << "0 - go back;" << std::endl
                << "1 - print value" << std::endl
@@ -283,9 +288,9 @@ namespace manager{
 
 
     void Array::set_single_instance(Table& table, size_t where, unsigned long long what) noexcept(false) {
-        if(where > position.size/single_size)
+        if(where >= position.size/single_size)
             throw std::runtime_error("There is no such element in the array!");
-        if(what > std::pow(2, single_size*8))
+        if(what > static_cast<unsigned long long>(std::pow(2, single_size*8)))
             throw std::runtime_error("The argument is too high to contain!");
 
         size_t size = single_size;
@@ -320,8 +325,13 @@ namespace manager{
     std::vector<unsigned long long> Array::operator()(const Table& table,
             size_t t_begin,
             size_t t_end) noexcept(false) {
+
+        if(t_begin > (this->position.size)/single_size)
+            throw std::invalid_argument("Incorrect first index");
+        if(t_end > (this->position.size)/single_size)
+            throw std::invalid_argument("Incorrect second index");
         std::vector<unsigned long long> vec;
-        for(size_t i = t_begin; i < t_end; i+= single_size){
+        for(size_t i = t_begin; i <= t_end; ++i){
             vec.push_back(get_single_instance(table, i));
         }
         return vec;
@@ -344,9 +354,8 @@ namespace manager{
 
 
     std::ostream& Array::show(const Table& table, std::ostream& os) const {
-        size_t start = this->position.starter_address;
-        size_t end = this->position.starter_address + this->position.size;
-        for(size_t i = (start/single_size); i < (end/single_size); ++i){
+        os << get_name() << ":" << std::endl;
+        for(size_t i = 0; i < ((this->position.size)/single_size); ++i){
             os << get_single_instance(table, i) << " ";
         }
         os << std::endl;
@@ -412,15 +421,18 @@ namespace manager{
 
 
 
-    void DivSeg::add_program(Program &pr) noexcept(false) {
+    void DivSeg::add_program(Program* pr) noexcept(false) {
         if(this->e_id != DivSeg_ID)
             throw std::domain_error("Cannot add a program to a non-DivSeg element");
+        if(std::find(programs.begin(), programs.end(), pr) != programs.end())
+            throw std::domain_error("Program already added");
+
         programs.push_back(pr);
     }
 
 
 
-    void DivSeg::erase_program(Program& pr) noexcept(false) {
+    void DivSeg::erase_program(Program* pr) noexcept(false) {
         if(this->e_id != DivSeg_ID)
             throw std::domain_error("Cannot erase a program of a non-DivSeg element");
         auto pos = std::find(programs.begin(), programs.end(), pr);
@@ -471,8 +483,8 @@ namespace manager{
 
 
     std::ostream& DivSeg::show_programs(std::ostream& os) const {
-        for(const auto& program : programs){
-            os << program.get_address() << " ";
+        for(auto program : programs){
+            os << program->get_address() << std::endl;
         }
         return os;
     }
@@ -519,7 +531,7 @@ namespace manager{
                     try{
                         auto vec = (*this)(table, i1, i2);
                         for(unsigned long long i : vec){
-                            std::cout << " " << i;
+                            os << " " << i;
                         }
                     } catch(std::exception& ex){
                         std::cerr << ex.what() << std::endl;
@@ -527,8 +539,8 @@ namespace manager{
                     }
                     break;
                 case 4:
-                    std::cout << "Programs:" << std::endl;
-                    this->show_programs(std::cout);
+                    os << "Programs:" << std::endl;
+                    this->show_programs(os);
                     break;
                 default:
                     os << "Unexpected choice, try again!" << std::endl;
@@ -537,62 +549,12 @@ namespace manager{
         }
     }
 
-
-
-    int App::command() {
-        int i = 0;
-        std::cout << "Which program to run?" << std::endl;
-        for(auto pr = programs.begin(); pr != programs.end(); ++pr, ++i){
-            std::cout << i << " " << pr->get_address() << std::endl;
-        }
-        std::cin >> i;
-        try{
-            programs.at(i).run();
-        } catch(std::exception& ex){
-            std::cerr << ex.what() << std::endl;
-            return 1;
-        }
-        return 1;
+    DivSeg::~DivSeg() {
+        programs.clear();  // intended, this should NEVER destroy the programs it refers to
     }
 
 
-
-    void App::create_program() {
-        size_t q;
-        std::string name;
-        std::cout << "Enter program's name: ";
-        std::cin >> name;
-        std::cout << std::endl << "Enter the program's memory quota: ";
-        std::cin >> q;
-        Program pr(table, q, name);
-        programs.push_back(pr);
-    }
-
-
-
-    void App::run() {
-        int rc = 1;
-        while(rc != 0){
-            std::cout << "What to do?" << std::endl;
-            std::cout << "0 - quit;" << std::endl
-                      << "1 - add program;" << std::endl
-                      << "2 - run program." << std::endl;
-            std::cin >> rc;
-            switch(rc){
-                case 0:
-                    rc = 0;
-                    break;
-                case 1:
-                    create_program();
-                    break;
-                case 2:
-                    command();
-                    break;
-                default:
-                    std::cout << "unexpected input. Try again." << std::endl;
-                    rc = 0;
-            }
-
-        }
+    bool Unit::operator==(const Unit& un) const {
+        return(this->size == un.size && this->starter_address == un.starter_address);
     }
 }

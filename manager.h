@@ -35,6 +35,7 @@ namespace manager{
 
         Unit(size_t t_strt, size_t t_size) : starter_address(t_strt), size(t_size){};
         Unit() : starter_address(0), size(0) {};
+        bool operator==(const Unit&) const;
     };
 
 
@@ -86,7 +87,7 @@ namespace manager{
 
     class Table{
     private:
-        static const int max_size = 1000;
+        static const int max_size = 500;
         std::vector<unsigned char> memory;
         std::vector<Unit> free_blocks;
     public:
@@ -111,7 +112,7 @@ namespace manager{
         std::vector<Entity*> entities; // the entities the program can operate with
         std::string file_address;    // file address
         const size_t memory_quota;   // max amount of memory available to this program
-        Table table;  // a program has no meaning w/o a table to store data in
+        Table* table;  // a program has no meaning w/o a table to store data in
         static const int menus;  // menus amount
         static std::string menu[];  // menus
 
@@ -121,15 +122,12 @@ namespace manager{
                 size_t single_val,
                 Entity_ID e_id,
                 const std::string& t_name) noexcept(false);
-        void add_entity(Entity*);
-
+        void add_entity(Entity*) noexcept(false);
         void free_entity(size_t t_index) noexcept(false);
+        void check_links(Unit);
         void free_all_memory() noexcept;
-        void add_existing_DivSeg(Entity*) noexcept(false); //todo include in dialogue
-        void refuse_div_seg(Entity*) noexcept(false);
-        std::vector<Entity*> get_div_segs() noexcept;
 
-        std::ostream& show_all(std::ostream&) const;
+        std::ostream& show_all(std::ostream&) const noexcept;
 
         int d_create_entity();
         int d_free_memory();
@@ -137,14 +135,16 @@ namespace manager{
         int d_show_all();
         int d_show_divsegs();
         int answer(int menus_count, std::string variants[]);
-        int (Program::*fptr[7])();
+        int (Program::*fptr[6])();
 
     public:
         Program() = delete;
-        explicit Program(Table& table, size_t t_mem, std::string t_addr = "default");
+        explicit Program(Table* table, size_t t_mem, std::string t_addr);
         Program& operator =(const Program&);
         Program& operator =(Program&&) noexcept;
         bool operator ==(const Program&);
+        std::vector<Entity*> get_div_segs() noexcept;
+        void add_existing_DivSeg(Entity*) noexcept(false); //includes add_program
         int run();
         std::string get_address() const noexcept { return file_address; }
         Program(const Program&);
@@ -155,12 +155,16 @@ namespace manager{
 
     class App{
     private:
-        Table table;
-        std::vector<Program> programs;
+        Table* table;
+        std::vector<Program*> programs;
     public:
+        App();
         void run();
         void create_program();
         int command();
+        void add_ds();
+        void list_programs();
+        ~App();
     };
 
 
@@ -188,7 +192,7 @@ namespace manager{
         Entity* ptr;
     public:
         Link() = delete;
-        explicit Link(Entity*, std::string t_name = "link_name");
+        explicit Link(Entity*, std::string t_name);
         Link(const Link&);
         Link(Link&&) noexcept;
 
@@ -220,7 +224,7 @@ namespace manager{
         void set_single_instance(Table&, size_t where, unsigned long long what) noexcept(false);
         std::vector<unsigned long long> operator ()(const Table&,
                 size_t t_begin,
-                size_t t_end) noexcept(false);
+                size_t t_end) noexcept(false);  //todo
         ~Array() override = default;
     };
 
@@ -228,7 +232,7 @@ namespace manager{
 
     class DivSeg : public Array{
     protected:
-        std::vector<Program> programs;
+        std::vector<Program*> programs;
     public:
         DivSeg() = default;
         DivSeg(const DivSeg&);
@@ -240,10 +244,10 @@ namespace manager{
         std::ostream& run(Table&, std::ostream&) override;
 
         std::ostream& show_programs (std::ostream&) const;
-        void add_program(Program&);
-        void erase_program(Program&);
+        void add_program(Program*);
+        void erase_program(Program*);
 
-        ~DivSeg() override = default;
+        ~DivSeg() override;
     };
 
 }
