@@ -81,9 +81,9 @@ namespace my_vector{ // todo set classes of iterators
         V_const_iter operator-(long long n) { return V_const_iter(p - n); }
 
         V_const_iter& operator++() { ++p; return *this; }
-        const V_const_iter operator++(int) { const V_const_iter it(p); ++p; return it; }
+        V_const_iter operator++(int) { const V_const_iter it(p); ++p; return it; }
         V_const_iter& operator--() { --p; return *this; }
-        const V_const_iter operator--(int) { const V_const_iter it(p); --p; return it; }
+        V_const_iter operator--(int) { const V_const_iter it(p); --p; return it; }
 
     };
 
@@ -115,9 +115,9 @@ namespace my_vector{ // todo set classes of iterators
         V_iter operator-(long long n) { return V_iter(p - n); }
 
         V_iter& operator++() { ++p; return *this; }
-        const V_iter operator++(int) { const V_iter it(p); ++p; return it; }
+        V_iter operator++(int) { const V_iter it(p); ++p; return it; }
         V_iter& operator--() { --p; return *this; }
-        const V_iter operator--(int) { const V_iter it(p); --p; return it; }
+        V_iter operator--(int) { const V_iter it(p); --p; return it; }
 
     };
 
