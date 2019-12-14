@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <utility>  // for std::move to move objects such as string's, and for std::exception
 #include "myvector.h"
+#include <vector> //todo delete this
 #include <string>
 #include <stdexcept>
 #include <cmath>  // for std::pow
@@ -224,7 +225,7 @@ namespace manager{
         void set_single_instance(Table&, size_t where, unsigned long long what) noexcept(false);
         std::vector<unsigned long long> operator ()(const Table&,
                 size_t t_begin,
-                size_t t_end) noexcept(false);  //todo
+                size_t t_end) noexcept(false);
         ~Array() override = default;
     };
 
