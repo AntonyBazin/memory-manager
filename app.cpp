@@ -85,7 +85,7 @@ namespace manager{
 
     void App::add_ds() {
         size_t i = 0, j = 0;
-        std::vector<Entity*> ds_vec = {};
+        vector<Entity*> ds_vec = {};
         std::cout << "Select a program to add to:" << std::endl;
         for(auto pr = programs.begin(); pr != programs.end(); ++pr, ++i){
             std::cout << i << " " << (*pr)->get_address() << std::endl;
