@@ -93,6 +93,8 @@ namespace my_vector{
         V_const_iter operator +(long long n) { return V_const_iter(p + n); }
         V_const_iter& operator -=(long long n) { p -= n; return *this; }
         V_const_iter operator -(long long n) { return V_const_iter(p - n); }
+        V_const_iter operator +(const V_const_iter& vci) { return V_const_iter(p + vci.p); }
+        V_const_iter operator -(const V_const_iter& vci) { return V_const_iter(p - vci.p); }
 
         V_const_iter& operator ++() { ++p; return *this; }
         V_const_iter& operator --() { --p; return *this; }
