@@ -71,7 +71,7 @@ namespace manager{
         if(std::find(entities.begin(), entities.end(), ent) != entities.end())
             throw std::invalid_argument("Entity already exists in this program!");
 
-        entities.emplace_back(ent);
+        entities.push_back(ent);
         ent->increment_refs();
         if(ent->get_entity_id() == DivSeg_ID){
             auto d_ptr = dynamic_cast<DivSeg*>(ent);
@@ -165,9 +165,9 @@ namespace manager{
 
 
 
-    std::vector<Entity*> Program::get_div_segs() noexcept {
+    vector<Entity*> Program::get_div_segs() noexcept {
         auto iter = entities.begin();
-        std::vector<Entity*> res = {};
+        vector<Entity*> res = {};
         for(; iter != entities.end(); ++iter){
             if((*iter)->get_entity_id() == DivSeg_ID){
                 res.push_back((*iter));

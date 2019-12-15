@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <utility>  // for std::move to move objects such as string's, and for std::exception
 #include "myvector.h"
-#include <vector> //todo delete this
 #include <string>
 #include <stdexcept>
 #include <cmath>  // for std::pow
@@ -68,7 +67,6 @@ namespace manager{
         void set_single_size(size_t sz) { single_size = sz; }
 
         Unit get_pos() const noexcept { return position; }
-        size_t get_single_size() const noexcept { return single_size; }
         size_t get_size() const noexcept { return  position.size; }
         Entity_ID get_entity_id() const noexcept { return e_id; }
         std::string get_name() const noexcept { return name; }
@@ -89,20 +87,20 @@ namespace manager{
     class Table{
     private:
         static const int max_size = 500;
-        std::vector<unsigned char> memory;
-        std::vector<Unit> free_blocks;
+        vector<unsigned char> memory;
+        vector<Unit> free_blocks;
     public:
         Table();
         void defragmentation();   // obvious
         void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
         Unit allocate_memory(size_t t_size);
 
-        std::vector<unsigned char> read_bytes(size_t t_strt,
+        vector<unsigned char> read_bytes(size_t t_strt,
                 size_t t_size) const noexcept(false);
 
         void write(size_t t_strt,
                 size_t t_size,
-                std::vector<unsigned char>t_vec) noexcept(false);
+                vector<unsigned char>t_vec) noexcept(false);
         ~Table() = default;
     };
 
@@ -110,7 +108,7 @@ namespace manager{
 
     class Program{
     private:
-        std::vector<Entity*> entities; // the entities the program can operate with
+        vector<Entity*> entities; // the entities the program can operate with
         std::string file_address;    // file address
         const size_t memory_quota;   // max amount of memory available to this program
         Table* table;  // a program has no meaning w/o a table to store data in
@@ -144,7 +142,7 @@ namespace manager{
         Program& operator =(const Program&);
         Program& operator =(Program&&) noexcept;
         bool operator ==(const Program&);
-        std::vector<Entity*> get_div_segs() noexcept;
+        vector<Entity*> get_div_segs() noexcept;
         void add_existing_DivSeg(Entity*) noexcept(false); //includes add_program
         int run();
         std::string get_address() const noexcept { return file_address; }
@@ -157,7 +155,7 @@ namespace manager{
     class App{
     private:
         Table* table;
-        std::vector<Program*> programs;
+        vector<Program*> programs;
     public:
         App();
         void run();
@@ -223,7 +221,7 @@ namespace manager{
 
         unsigned long long get_single_instance(const Table&, size_t t_begin) const noexcept(false);
         void set_single_instance(Table&, size_t where, unsigned long long what) noexcept(false);
-        std::vector<unsigned long long> operator ()(const Table&,
+        vector<unsigned long long> operator ()(const Table&,
                 size_t t_begin,
                 size_t t_end) noexcept(false);
         ~Array() override = default;
@@ -233,7 +231,7 @@ namespace manager{
 
     class DivSeg : public Array{
     protected:
-        std::vector<Program*> programs;
+        vector<Program*> programs;
     public:
         DivSeg() = default;
         DivSeg(const DivSeg&);
