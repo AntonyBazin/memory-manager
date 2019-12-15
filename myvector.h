@@ -5,7 +5,7 @@
 #ifndef MEMORY_MANAGER_MYVECTOR_H
 #define MEMORY_MANAGER_MYVECTOR_H
 
-#include <iterator>  // for std::distance
+#include <iterator>
 
 
 namespace my_vector{
@@ -66,7 +66,7 @@ namespace my_vector{
 
 
     template<class T>
-    class V_const_iter{
+    class V_const_iter : public __gnu_cxx::iterator<std::random_access_iterator_tag, T>{
     protected:
         T* p;
     public:
@@ -105,7 +105,7 @@ namespace my_vector{
 
 
     template<class T>
-    class V_iter{
+    class V_iter : public __gnu_cxx::iterator<std::random_access_iterator_tag, T>{
     protected:
         T* p;
     public:
@@ -132,6 +132,8 @@ namespace my_vector{
         V_iter operator -(long long n) { return V_iter(p - n); }
         V_iter& operator +=(long long n) { p += n; return *this; }
         V_iter& operator -=(long long n) { p -= n; return *this; }
+        V_iter operator +(const V_iter& vi) { return V_iter(p + vi.p); }
+        V_iter operator -(const V_iter& vi) { return V_iter(p - vi.p); }
 
         V_iter& operator ++() { ++p; return *this; }
         V_iter operator ++(int) { const V_iter it(p); ++p; return it; }
@@ -195,7 +197,7 @@ namespace my_vector{
         m_buffer = nullptr;
         size_t dist = std::distance(start, finish);
         for(size_t i = 0; i < dist; ++i){
-            push_back(start + i);
+            push_back(*(start + i));
         }
     }
 
@@ -304,7 +306,8 @@ namespace my_vector{
 
     template<class T>
     void vector<T>::erase(vector::iterator which) {
-        size_t dist = std::distance(begin(), which) - 1;
+        size_t dist = 0;
+        for(auto it = begin(); it != which; ++it, ++dist){}
         if(dist >= m_size)
             throw std::out_of_range("erase error: argument out of range");
         for(size_t i = dist; i < m_size - 1; ++i){

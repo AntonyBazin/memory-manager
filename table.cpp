@@ -93,8 +93,7 @@ namespace manager{
 
         auto begin = memory.begin() + t_strt;
         auto end = memory.begin() + t_strt + t_size;
-        vector<unsigned char> answer;
-        answer.insert(answer.begin(), begin, end);
+        vector<unsigned char> answer(*begin, *end);
         return answer;
     }
 
