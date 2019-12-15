@@ -240,9 +240,8 @@ namespace my_vector{
 
     template<class T>
     void vector<T>::push_back(const T& value) {
-        if(m_size >= m_capacity){
+        if(m_size >= m_capacity)
             reserve(m_size + 10);
-        }
         m_buffer[m_size++] = value;
     }
 
@@ -250,14 +249,25 @@ namespace my_vector{
 
     template<class T>
     void vector<T>::insert(vector::iterator pos, const T& val) {
-        
+        if(m_size + 1 >= m_capacity)
+            reserve(m_size + 10);
+        size_t index = std::distance(begin(), pos);
+        ++m_size;
+        for(size_t i = index; i < m_size; ++i){  // move elements behind index 1 pos right
+            m_buffer[i + 1] = std::move(m_buffer[i]);
+        }
+        m_buffer[index] = val;
     }
 
 
 
     template<class T>
     void vector<T>::insert(vector::iterator pos, size_t count, const T &val) {
-
+        if(m_size + count >= m_capacity)
+            reserve(m_size + count + 10);
+        for(size_t i = 0; i < count; ++i){
+            insert(pos, val);
+        }
     }
 
 
