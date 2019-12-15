@@ -10,61 +10,6 @@
 
 namespace my_vector{
 
-    template <class T>
-    class V_const_iter;
-
-    template <class T>
-    class V_iter;
-
-    template<class T>
-    class vector{
-    private:
-        size_t m_size;
-        size_t m_capacity;
-        T* m_buffer;
-    public:
-        using const_iterator = V_const_iter<T>;
-        using iterator = V_iter<T>;
-
-        vector() : m_size(0),
-                   m_capacity(0),
-                   m_buffer(nullptr) {}
-        explicit vector(size_t t_size);
-        vector(size_t t_size, const T& initial);
-        vector(T* start, T* finish);
-        vector(const vector<T>& v);
-        vector(vector<T>&& v) noexcept;
-        ~vector();
-
-        size_t capacity() const { return m_capacity; }
-        size_t size() const { return m_size; }
-        bool empty() const { return !m_size; }
-
-        iterator begin() noexcept { return V_iter<T>(m_buffer); }
-        iterator end() noexcept { return V_iter<T>(m_buffer + m_size); }
-        const_iterator begin() const noexcept { return V_const_iter<T>(m_buffer); }
-        const_iterator end() const noexcept { return V_const_iter<T>(m_buffer + m_size); }
-        const_iterator cbegin() const noexcept { return V_const_iter<T>(m_buffer); }
-        const_iterator cend() const noexcept { return V_const_iter<T>(m_buffer + m_size); }
-
-        void push_back(const T& value);
-        void insert(iterator pos, const T& val);
-        void insert(iterator pos, size_t count, const T& val);
-        T& at(size_t index);
-        void reserve(size_t t_capacity);
-        void resize(size_t t_size);
-        void erase(iterator which);
-        void clear();
-
-        T& operator [](size_t index);
-        T operator [](size_t index) const;
-        vector<T>& operator =(const vector<T>&);
-        vector<T>& operator =(vector<T>&&);
-        bool operator !=(const vector<T>&) const;
-    };
-
-
-
     template<class T>
     class V_const_iter : public __gnu_cxx::iterator<std::random_access_iterator_tag, T>{
     protected:
@@ -79,29 +24,29 @@ namespace my_vector{
         V_const_iter& operator =(const V_const_iter& vci) { this->p = vci.p; return *this; }
         V_const_iter& operator =( V_const_iter&& vci) { this->p = vci.p; vci.p = nullptr; return *this; }
 
-        bool operator !=(const V_const_iter& vci) const { return p != vci.p; }
-        bool operator ==(const V_const_iter& vci) const { return p == vci.p; }
-        bool operator > (const V_const_iter& vci) const { return p - vci.p > 0; }
+        bool operator !=(const V_const_iter& vci) const { return this->p != vci.p; }
+        bool operator ==(const V_const_iter& vci) const { return this->p == vci.p; }
+        bool operator > (const V_const_iter& vci) const { return this->p - vci.p > 0; }
         bool operator < (const V_const_iter& vci) const { return vci > *this; }
         bool operator >=(const V_const_iter& vci) const { return !(*this < vci); }
         bool operator <=(const V_const_iter& vci) const { return !(*this > vci); }
 
-        const T& operator *() const { if(p) return *p; throw std::runtime_error("null pointer"); }
-        const T* operator ->() const { return p; }
+        const T& operator *() const { if(this->p) return *(this->p); throw std::runtime_error("null pointer"); }
+        const T* operator ->() const { return this->p; }
 
-        V_const_iter& operator +=(long long n) { p += n; return *this; }
-        V_const_iter operator +(long long n) { return V_const_iter(p + n); }
-        V_const_iter& operator -=(long long n) { p -= n; return *this; }
-        V_const_iter operator -(long long n) { return V_const_iter(p - n); }
-        V_const_iter operator +(const V_const_iter& vci) { return V_const_iter(p + vci.p); }
-        V_const_iter operator -(const V_const_iter& vci) { return V_const_iter(p - vci.p); }
+        V_const_iter& operator +=(long long n) { this->p += n; return *this; }
+        V_const_iter operator +(long long n) { return V_const_iter(this->p + n); }
+        V_const_iter& operator -=(long long n) { this->p -= n; return *this; }
+        V_const_iter operator -(long long n) { return V_const_iter(this->p - n); }
+        int operator +(const V_const_iter& vci) { return this->p + vci.p; }
+        int operator -(const V_const_iter& vci) { return this->p - vci.p; }
 
         V_const_iter& operator ++() { ++p; return *this; }
         V_const_iter& operator --() { --p; return *this; }
-        V_const_iter operator ++(int) { const V_const_iter it(p); ++p; return it; }
-        V_const_iter operator --(int) { const V_const_iter it(p); --p; return it; }
+        V_const_iter operator ++(int) { const V_const_iter it(this->p); ++(this->p); return it; }
+        V_const_iter operator --(int) { const V_const_iter it(this->p); --(this->p); return it; }
 
-        const T& operator [](size_t n) const { if(p) return (p + n); throw(std::runtime_error("null pointer indexing")); }
+        const T& operator [](size_t n) const { if(this->p) return (this->p + n); throw(std::runtime_error("null pointer indexing")); }
     };
 
 
@@ -120,31 +65,88 @@ namespace my_vector{
         V_iter& operator =(const V_iter& vci) { this->p = vci.p; return *this; }
         V_iter& operator =( V_iter&& vci) { this->p = vci.p; vci.p = nullptr; return *this; }
 
-        bool operator !=(const V_iter& vi) const { return p != vi.p; }
-        bool operator ==(const V_iter& vi) const { return p == vi.p; }
-        bool operator > (const V_iter& vi) const { return p - vi.p > 0; }
+        bool operator !=(const V_iter& vi) const { return this->p != vi.p; }
+        bool operator ==(const V_iter& vi) const { return this->p == vi.p; }
+        bool operator > (const V_iter& vi) const { return this->p - vi.p > 0; }
         bool operator < (const V_iter& vi) const { return vi > *this; }
         bool operator >=(const V_iter& vi) const { return !(*this < vi); }
         bool operator <=(const V_iter& vi) const { return !(*this > vi); }
 
-        T& operator *() { if(p) return *p; throw std::runtime_error("null pointer dereference"); }
-        T* operator ->() { return p; }
+        T& operator *() { if(this->p) return *(this->p); throw std::runtime_error("null pointer dereference"); }
+        T* operator ->() { return this->p; }
 
-        V_iter operator +(long long n) { return V_iter(p + n); }
-        V_iter operator -(long long n) { return V_iter(p - n); }
-        V_iter& operator +=(long long n) { p += n; return *this; }
-        V_iter& operator -=(long long n) { p -= n; return *this; }
-        V_iter operator +(const V_iter& vi) { return V_iter(p + vi.p); }
-        V_iter operator -(const V_iter& vi) { return V_iter(p - vi.p); }
+        V_iter operator +(long long n) { return V_iter(this->p + n); }
+        V_iter operator -(long long n) { return V_iter(this->p - n); }
+        V_iter& operator +=(long long n) { this->p += n; return *this; }
+        V_iter& operator -=(long long n) { this->p -= n; return *this; }
+        int operator +(const V_iter& vi) { return this->p + vi.p; }
+        int operator -(const V_iter& vi) { return this->p - vi.p; }
 
-        V_iter& operator ++() { ++p; return *this; }
-        V_iter operator ++(int) { const V_iter it(p); ++p; return it; }
-        V_iter& operator --() { --p; return *this; }
-        V_iter operator --(int) { const V_iter it(p); --p; return it; }
+        V_iter& operator ++() { ++(this->p); return *this; }
+        V_iter operator ++(int) { const V_iter it(this->p); (++this->p); return it; }
+        V_iter& operator --() { --(this->p); return *this; }
+        V_iter operator --(int) { const V_iter it(this->p); --(this->p); return it; }
 
-        T& operator [](size_t n) const { if(p) return (p + n); throw(std::runtime_error("null pointer indexing")); }
+        T& operator [](size_t n) const { if(this->p) return (this->p + n); throw(std::runtime_error("null pointer indexing")); }
 
     };
+
+
+
+    template<class T>
+    class vector{
+    private:
+        size_t m_size;
+        size_t m_capacity;
+        T* m_buffer;
+        void insert(size_t, const T&); // service method, basically won't be useful to override and/or give to user
+    public:
+        using const_iterator = V_const_iter<T>;
+        using iterator = V_iter<T>;
+
+        vector();
+        vector(iterator start, iterator finish);
+        vector(const vector<T>& v);
+        vector(vector<T>&& v) noexcept;
+        ~vector();
+
+        size_t capacity() const { return m_capacity; }
+        size_t size() const { return m_size; }
+        bool empty() const { return !m_size; }
+
+        iterator begin() noexcept { return V_iter<T>(m_buffer); }
+        iterator end() noexcept { return V_iter<T>(m_buffer + m_size); }
+        const_iterator begin() const noexcept { return V_const_iter<T>(m_buffer); }
+        const_iterator end() const noexcept { return V_const_iter<T>(m_buffer + m_size); }
+        const_iterator cbegin() const noexcept { return V_const_iter<T>(m_buffer); }
+        const_iterator cend() const noexcept { return V_const_iter<T>(m_buffer + m_size); }
+
+        void push_back(const T& value);
+        void insert(iterator pos, const T& val);
+        void insert(iterator pos, size_t count, const T& val);
+        void insert(iterator where, const_iterator start, const_iterator end);
+        T& at(size_t index);
+        void reserve(size_t t_capacity);
+        void resize(size_t t_size);
+        void erase(iterator which);
+        void clear();
+
+        T& operator [](size_t index);
+        T operator [](size_t index) const;
+        vector<T>& operator =(const vector<T>&);
+        vector<T>& operator =(vector<T>&&);
+        bool operator !=(const vector<T>&) const;
+    };
+
+
+
+    template<class T>
+    vector<T>::vector() {
+        m_size = 0;
+        m_capacity = 0;
+        m_buffer = nullptr;
+        reserve(30);
+    }
 
 
 
@@ -173,32 +175,13 @@ namespace my_vector{
 
 
     template<class T>
-    vector<T>::vector(const size_t t_size) {
-        m_size = t_size;
-        m_buffer = new T[m_capacity];
-        m_capacity = t_size + 10;
-    }
-
-
-
-    template<class T>
-    vector<T>::vector(const size_t t_size, const T& initial) {
-        m_size = t_size;
-        m_capacity = t_size + 10;
-        m_buffer = new T[m_capacity];
-        for(size_t i = 0; i < t_size; ++i){
-            m_buffer[i] = initial;
-        }
-    }
-
-
-    template<class T>
-    vector<T>::vector(T* start, T* finish) {
+    vector<T>::vector(iterator start, iterator finish) {
         m_size = 0;
         m_capacity = 0;
         m_buffer = nullptr;
         size_t dist = std::distance(start, finish);
         for(size_t i = 0; i < dist; ++i){
+            auto p = start + i;
             push_back(*(start + i));
         }
     }
@@ -253,9 +236,9 @@ namespace my_vector{
 
     template<class T>
     void vector<T>::insert(vector::iterator pos, const T& val) {
-        if(m_size + 1 >= m_capacity)
-            reserve(m_size + 10);
         size_t index = std::distance(begin(), pos);
+        if(m_size + 1 >= m_capacity)
+            reserve(m_size + 30);
         ++m_size;
         for(size_t i = index; i < m_size; ++i){  // move elements behind index 1 pos right
             m_buffer[i + 1] = std::move(m_buffer[i]);
@@ -267,12 +250,36 @@ namespace my_vector{
 
     template<class T>
     void vector<T>::insert(vector::iterator pos, size_t count, const T &val) {
-        if(m_size + count >= m_capacity)
-            reserve(m_size + count + 10);
+        size_t index = std::distance(begin(), pos);
         for(size_t i = 0; i < count; ++i){
-            insert(pos, val);
+            insert(index + i, val);
         }
     }
+
+
+
+    template<class T>
+    void vector<T>::insert(vector::iterator where, vector::const_iterator start, vector::const_iterator end) {
+        size_t amount = std::distance(start, end);
+        size_t index = std::distance(this->begin(), where) - 1;
+        for(size_t i = 0; i < amount; ++i){
+            insert(index + 1, *(start + i));
+        }
+    }
+
+
+
+    template<class T>
+    void vector<T>::insert(size_t index, const T& val) {
+        if(m_size + 1 >= m_capacity)
+            reserve(m_size + 30);
+        ++m_size;
+        for(size_t i = index; i < m_size; ++i){  // move elements behind index 1 pos right
+            m_buffer[i + 1] = std::move(m_buffer[i]);
+        }
+        m_buffer[index] = val;
+    }
+
 
 
 
@@ -288,8 +295,10 @@ namespace my_vector{
     template<class T>
     void vector<T>::reserve(size_t t_capacity) {
         T* new_buffer = new T[t_capacity];
-        for(size_t i = 0; i < m_size; ++i){
-            new_buffer[i] = m_buffer[i];
+        if(m_buffer != nullptr){
+            for(size_t i = 0; i < m_size; ++i){
+                new_buffer[i] = m_buffer[i];
+            };
         }
         m_capacity = t_capacity;
         delete [] m_buffer;
@@ -333,7 +342,7 @@ namespace my_vector{
     template<class T>
     T& vector<T>::operator [](size_t index) {
         if(index >= m_size)
-            throw std::out_of_range("vector: operator []: index out of range");
+            throw std::out_of_range("vector: operator[]: index out of range");
         return m_buffer[index];
     }
 
@@ -342,7 +351,7 @@ namespace my_vector{
     template<class T>
     T vector<T>::operator [](size_t index) const {
         if(index >= m_size)
-            throw std::out_of_range("vector: operator []: index out of range");
+            throw std::out_of_range("vector: operator[]: index out of range");
         return m_buffer[index];
     }
 
@@ -353,7 +362,7 @@ namespace my_vector{
         if(m_size != v.m_size) return false;
         if(m_buffer != v.m_buffer) return false;
         for(size_t i = 0; i < m_size; ++i){
-            if(at(i) != v.at(i)) return false;
+            if(m_buffer[i] != v.m_buffer[i]) return false;
         }
         return true;
     }

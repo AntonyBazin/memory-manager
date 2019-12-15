@@ -93,7 +93,8 @@ namespace manager{
 
         auto begin = memory.begin() + t_strt;
         auto end = memory.begin() + t_strt + t_size;
-        vector<unsigned char> answer(*begin, *end);
+        vector<unsigned char> answer;
+        answer.insert(answer.begin(), begin, end);
         return answer;
     }
 
@@ -102,7 +103,8 @@ namespace manager{
     void Table::write(size_t t_strt, size_t t_size, vector<unsigned char> t_vec) noexcept(false) {
         if(t_size > max_size - t_strt)
             throw std::invalid_argument("value too big to write");
-        for(size_t i = t_strt; i <= t_strt + t_size; ++i){
+        for(size_t i = t_strt; i < t_strt + t_size; ++i){
+            std::cout << (long long) t_vec[i] << std::endl; //todo delet
             memory[i] = t_vec[i - t_strt];
         }
     }

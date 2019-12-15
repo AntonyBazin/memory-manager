@@ -84,7 +84,9 @@ namespace manager{
         for(size_t i = 0; i < size; ++i){
             c[size - 1 - i] = p[i];
         }
-        vector<unsigned char> v(c, c + size);
+        vector<unsigned char>::iterator i1(c);
+        vector<unsigned char>::iterator i2 = i1 + size;
+        vector<unsigned char> v(i1, i2);
         table.write(position.starter_address, position.size, v);
     }
 
@@ -299,7 +301,9 @@ namespace manager{
         for(size_t i = 0; i < size; ++i){
             c[size - 1 - i] = p[i];
         }
-        vector<unsigned char> v(c, c + size);
+        vector<unsigned char>::iterator i1(c);
+        vector<unsigned char>::iterator i2 = i1 + size;
+        vector<unsigned char> v(i1, i2);
         table.write(position.starter_address + (size*where), single_size, v);
     }
 
