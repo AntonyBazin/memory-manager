@@ -103,7 +103,7 @@ namespace manager{
     void Table::write(size_t t_strt, size_t t_size, std::vector<unsigned char> t_vec) noexcept(false) {
         if(t_size > max_size - t_strt)
             throw std::invalid_argument("value too big to write");
-        for(size_t i = t_strt; i <= t_strt + t_size; ++i){
+        for(size_t i = t_strt; i < t_strt + t_size; ++i){
             memory[i] = t_vec[i - t_strt];
         }
     }
