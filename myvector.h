@@ -124,8 +124,8 @@ namespace my_vector{
         void push_back(const T& value);
         void insert(iterator pos, const T& val);
         void insert(iterator pos, size_t count, const T& val);
-        void insert(iterator where, const_iterator start, const_iterator end);
         T& at(size_t index);
+        T at(size_t index) const;
         void reserve(size_t t_capacity);
         void resize(size_t t_size);
         void erase(iterator which);
@@ -181,7 +181,6 @@ namespace my_vector{
         m_buffer = nullptr;
         size_t dist = std::distance(start, finish);
         for(size_t i = 0; i < dist; ++i){
-            auto p = start + i;
             push_back(*(start + i));
         }
     }
@@ -249,21 +248,10 @@ namespace my_vector{
 
 
     template<class T>
-    void vector<T>::insert(vector::iterator pos, size_t count, const T &val) {
+    void vector<T>::insert(vector::iterator pos, size_t count, const T& val) {
         size_t index = std::distance(begin(), pos);
         for(size_t i = 0; i < count; ++i){
-            insert(index + i, val);
-        }
-    }
-
-
-
-    template<class T>
-    void vector<T>::insert(vector::iterator where, vector::const_iterator start, vector::const_iterator end) {
-        size_t amount = std::distance(start, end);
-        size_t index = std::distance(this->begin(), where) - 1;
-        for(size_t i = 0; i < amount; ++i){
-            insert(index + 1, *(start + i));
+            insert(index, val);
         }
     }
 
@@ -285,6 +273,15 @@ namespace my_vector{
 
     template<class T>
     T& vector<T>::at(size_t index) {
+        if(index >= m_size)
+            throw std::out_of_range("vector: at: index out of range");
+        return m_buffer[index];
+    }
+
+
+
+    template<class T>
+    T vector<T>::at(size_t index) const{
         if(index >= m_size)
             throw std::out_of_range("vector: at: index out of range");
         return m_buffer[index];
@@ -341,8 +338,6 @@ namespace my_vector{
 
     template<class T>
     T& vector<T>::operator [](size_t index) {
-        if(index >= m_size)
-            throw std::out_of_range("vector: operator[]: index out of range");
         return m_buffer[index];
     }
 
@@ -350,8 +345,6 @@ namespace my_vector{
 
     template<class T>
     T vector<T>::operator [](size_t index) const {
-        if(index >= m_size)
-            throw std::out_of_range("vector: operator[]: index out of range");
         return m_buffer[index];
     }
 
