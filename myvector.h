@@ -318,7 +318,7 @@ namespace my_vector{
         for(auto it = begin(); it != which; ++it, ++dist){}
         if(dist >= m_size)
             throw std::out_of_range("erase error: argument out of range");
-        for(size_t i = dist; i < m_size - 1; ++i){
+        for(size_t i = dist; i < m_size; ++i){
             m_buffer[i] = std::move(m_buffer[i + 1]);
         }
         --m_size;
