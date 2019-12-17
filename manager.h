@@ -1,6 +1,13 @@
 //
 // Created by antony on 10/29/19.
 //
+/*!
+\file
+\brief Header file with classes declaration
+
+This file contents the declarations of the
+classes used in the application
+*/
 
 #ifndef MEMORY_MANAGER_MANAGER_H
 #define MEMORY_MANAGER_MANAGER_H
