@@ -84,7 +84,9 @@ namespace manager{
         for(size_t i = 0; i < size; ++i){
             c[size - 1 - i] = p[i];
         }
-        std::vector<unsigned char> v(c, c + size);
+        vector<unsigned char>::iterator i1(c);
+        vector<unsigned char>::iterator i2 = i1 + size;
+        vector<unsigned char> v(i1, i2);
         table.write(position.starter_address, position.size, v);
     }
 
@@ -299,7 +301,9 @@ namespace manager{
         for(size_t i = 0; i < size; ++i){
             c[size - 1 - i] = p[i];
         }
-        std::vector<unsigned char> v(c, c + size);
+        vector<unsigned char>::iterator i1(c);
+        vector<unsigned char>::iterator i2 = i1 + size;
+        vector<unsigned char> v(i1, i2);
         table.write(position.starter_address + (size*where), single_size, v);
     }
 
@@ -322,7 +326,7 @@ namespace manager{
 
 
 
-    std::vector<unsigned long long> Array::operator()(const Table& table,
+    vector<unsigned long long> Array::operator()(const Table& table,
             size_t t_begin,
             size_t t_end) noexcept(false) {
 
@@ -330,7 +334,7 @@ namespace manager{
             throw std::invalid_argument("Incorrect first index");
         if(t_end > (this->position.size)/single_size)
             throw std::invalid_argument("Incorrect second index");
-        std::vector<unsigned long long> vec;
+        vector<unsigned long long> vec;
         for(size_t i = t_begin; i <= t_end; ++i){
             vec.push_back(get_single_instance(table, i));
         }

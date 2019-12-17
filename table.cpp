@@ -12,13 +12,13 @@ namespace manager{
         memory.insert(memory.begin(), max_size, '\0');
         free_blocks = {};
         Unit un(0, max_size);
-        free_blocks.emplace_back(un);
+        free_blocks.push_back(un);
     }
 
 
 
     void Table::defragmentation() {
-        std::vector<Unit>::iterator vec_it;  // a cycle is used for full defragmentation
+        vector<Unit>::iterator vec_it;  // a cycle is used for full defragmentation
         for(vec_it = free_blocks.begin() + 1; vec_it != free_blocks.end(); ++vec_it){
             if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size + 1){
                 --vec_it;
@@ -85,22 +85,22 @@ namespace manager{
 
 
 
-    std::vector<unsigned char> Table::read_bytes(size_t t_strt, size_t t_size) const noexcept(false) {
+    vector<unsigned char> Table::read_bytes(size_t t_strt, size_t t_size) const noexcept(false) {
         if(t_strt < 0 || t_size <= 0)
             throw std::invalid_argument("argument below zero");
         if(t_strt > max_size || t_size > max_size)
             throw std::invalid_argument("argument above maximum available memory");
 
-        auto begin = memory.begin() + t_strt;
-        auto end = memory.begin() + t_strt + t_size;
-        std::vector<unsigned char> answer;
-        answer.insert(answer.begin(), begin, end);
+        vector<unsigned char> answer;
+        for(size_t i = 0; i < t_size; ++i){
+            answer.push_back(*(memory.begin() + t_strt + i));
+        }
         return answer;
     }
 
 
 
-    void Table::write(size_t t_strt, size_t t_size, std::vector<unsigned char> t_vec) noexcept(false) {
+    void Table::write(size_t t_strt, size_t t_size, vector<unsigned char> t_vec) noexcept(false) {
         if(t_size > max_size - t_strt)
             throw std::invalid_argument("value too big to write");
         for(size_t i = t_strt; i < t_strt + t_size; ++i){
