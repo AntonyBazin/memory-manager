@@ -24,21 +24,119 @@ classes used in the application
 
 namespace manager{
 
+    /*!
+     * \brief This class is used for storing the information
+     * and accessing it.
+     *
+     * Allows programs to allocate memory, write to it, read it,
+     * mark it as free. It also has a special defragmentation function
+     * for clearing the borders of deallocated memory parts.
+     */
     class Table;
+
+    /*!
+     * \brief This class describes a program.
+     *
+     * The Program class is used to store the Entities descriptions.
+     * It allows the user to request the table to allocate memory
+     * for Entities, get information about them,
+     * work with the existing Entities that this Program has access to,
+     * and refuse the Entities by deallocating the memory.
+     */
     class Program;
+
+    /*!
+     * \brief This class is used to contain and give access to Programs.
+     *
+     * The App class is used to store the Program class objects
+     * and provides dialogue methods to work with them.
+     */
     class App;
+
+    /*!
+     * \brief This class describes and Entity.
+     *
+     * The Entity class is the abstract class used to work with
+     * Entities. It is a Base class for the descriptors of
+     * Value, Array, Link, Dividable Segment. It contains the basic
+     * fields and methods(including virtual) used by all these Entities.
+     */
     class Entity;
-    class Array;
-    class Link;
+
+    /*!
+     * \brief This class describes a single Value.
+     *
+     * The Value class is a class derived from the Entity class.
+     * It contains the methods for setting the value,
+     * reading it from the table and converting it into
+     * human-readable numbers.
+     */
     class Value;
+
+    /*!
+     * \brief This class describes an array of values.
+     *
+     * The Array class is a class derived from the Entity class.
+     * It contains the methods for setting the values of array
+     * elements, reading them from the table(all at one or in
+     * an index range) and converting them into
+     * human-readable numbers.
+     * \warning This array can only be used inside the program it
+     * was created in.
+     */
+    class Array;
+
+    /*!
+     * \brief This class describes a single Link.
+     *
+     * The Link class is a class derived from the Entity class.
+     * It points to some other class, such as Value, Array or
+     * Dividable Segment. The user gains access to these Entities
+     * through this class.
+     * \note This Link can only be used in the program it
+     * was created in.
+     * \note Since the Link can only point to another Entity,
+     * it cannot exist alone, by itself.
+     * \warning When the Entity which a Link refers to is deallocated,
+     * a message about this incorrect Link will appear,
+     * and the Link will be destroyed as well.
+     */
+    class Link;
+
+    /*!
+     * \brief This class describes a Dividable Segment.
+     *
+     * The Dividable Segment class is a class derived from the Entity class.
+     * It contains the methods for setting the values of array
+     * elements, reading them from the table(all at one or in
+     * an index range) and converting them into
+     * human-readable numbers. This type of Array can be used
+     * in multiple Programs.
+     * \note If this Entity is divided between two or
+     * more Programs at the same time, and one of them
+     * is ordered to free this Segment, it will only stop working with
+     * it, the Entity itself will not be destroyed.
+     */
     class DivSeg;
 
-    enum Entity_ID{ Value_ID = 0, Array_ID, DivSeg_ID, Link_ID, E_ERR };
+    /// The keys used to identify the Entities
+    enum Entity_ID{ Value_ID = 0,  ///< Defines the Entity as a Single Value
+            Array_ID,              ///< Defines the Entity as an Array
+            DivSeg_ID,             ///< Defines the Entity as a Dividable Segment
+            Link_ID,               ///< Defines the Entity as a Link
+            E_ERR };               ///< Used in undefined Entites. Will never appear normally.
 
 
+    /*!
+     * \brief This class describes the position of a memory block.
+     *
+     * It is used by the Table class to store the free blocks
+     * and the Entities descriptors to mark the memory
+     * available for them.
+     */
     struct Unit{
-        size_t starter_address;
-        size_t size;
+        size_t starter_address;      ///> The start address of the block
+        size_t size;                 ///> The size of the block
 
         Unit(size_t t_strt, size_t t_size) : starter_address(t_strt), size(t_size){};
         Unit() : starter_address(0), size(0) {};
