@@ -465,15 +465,29 @@ namespace manager{
 
     class App{
     private:
-        Table* table;
-        std::vector<Program*> programs;
+        Table* table;                    ///< A pointer to a table objects existing in this App
+        std::vector<Program*> programs;  ///< A vector of existing Programs in this App
     public:
+
+        //! \brief A default constructor, creates a new Table.
         App();
+
+        //! \brief A dialogue running the App method.
         void run();
+
+        //! \brief A dialogue method for creating a Program.
         void create_program();
+
+        //! \brief A method to command an existing Program
         int command();
+
+        //! \brief A method to add an existing Dividable Segment to a certain Program
         void add_ds();
+
+        //! \brief A dialogue method to list all Programs
         void list_programs();
+
+        //! An obvious destructor deleting Programs and the Table pointers
         ~App();
     };
 
