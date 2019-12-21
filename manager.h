@@ -495,17 +495,61 @@ namespace manager{
 
     class Value : public Entity{
     public:
+
+        //! \brief A default constructor of a Value. Usually not used directly.
         Value() = default;
+
+        //! \brief A copying constructor
         Value(const Value&) = default;
+
+        //! \brief A moving constructor
         Value(Value&&) noexcept;
 
-        std::ostream& show(const Table&, std::ostream&) const override;
+        /*!
+         * \brief A method which shows all the information about this Value.
+         * \param table the table which this Value is stored in
+         * \param os the output stream to print the information to
+         * \sa Entity
+         */
+        std::ostream& show(const Table& table, std::ostream& os) const override;
+
+        /*!
+         * \brief A method which creates a clone of this Value.
+         * \return A newly created object
+         * \sa Entity
+         */
         Entity* clone() const override;
-        Entity* create_link(std::string) const override;
+
+        /*!
+         * \brief A method which creates a Link to this Value.
+         * \param t_name the name of the new Link
+         * \return A newly created Link
+         * \sa Entity
+         */
+        Entity* create_link(std::string t_name) const override;
+
+        /*!
+         * \brief A dialogue method which runs the Value dialogue.
+         * \sa Entity
+         */
         std::ostream& run(Table&, std::ostream&) override;
 
-        unsigned long long get_instance(const Table&) const;
-        void set_instance(Table&, unsigned long long new_inst) noexcept(false);
+
+        /*!
+         * \brief A method which return the instance stored in the table described by this Value.
+         * \param table the table this Value stores the information in
+         * \return The value of this object
+         */
+        unsigned long long get_instance(const Table& table) const;
+
+        /*!
+         * \brief A method to set the instance of this Value.
+         * \param table the table this Value is stored in
+         * \param new_inst the new instance to be set
+         */
+        void set_instance(Table& table, unsigned long long new_inst) noexcept(false);
+
+        //! \brief A simple trivial destructor.
         ~Value() override = default;
     };
 
@@ -513,21 +557,75 @@ namespace manager{
 
     class Link : public Entity{
     private:
-        Entity* ptr;
+        Entity* ptr;      ///> the pointer to the Entity this Link points to
     public:
+
+        //! \brief A default Link costructor. Usually not used directly.
         Link() = delete;
+
+        //! \brief A constructor used to create a Link with the given name and existing Entity pointer.
         explicit Link(Entity*, std::string t_name);
+
+        //! \brief A copying constructor for a Link.
         Link(const Link&);
+
+        //! \brief A moving constructor of a Link.
         Link(Link&&) noexcept;
 
-        std::ostream& show(const Table&, std::ostream&) const override;
+
+        /*!
+         * \brief A method which shows all the information about this Link.
+         * \param table the table which this Link is stored in
+         * \param os the output stream to print the information to
+         * \sa Entity
+         */
+        std::ostream& show(const Table& table, std::ostream& os) const override;
+
+        /*!
+         * \brief A method which creates a clone of this Link.
+         * \return A newly created object
+         * \sa Entity
+         */
         Entity* clone() const override;
-        Entity* create_link(std::string) const override;
+
+        /*!
+        * \brief A method which creates a Link to this Link.
+        * \param t_name the name of the new Link
+        * \return A newly created Link
+        * \sa Entity
+        */
+        Entity* create_link(std::string t_name) const override;
+
+        /*!
+         * \brief A dialogue method which runs the Link dialogue.
+         * \sa Entity
+         */
         std::ostream& run(Table&, std::ostream&) override;
 
-        unsigned long long get_instance(const Table&) const;
-        void set_instance(Table&, unsigned long long new_inst, size_t index = 0);
+
+        /*!
+         * \brief A method which return the instance stored in the Entity pointed by this Link.
+         * \param table the table the Entity pointed on by this Link stores information in
+         * \return The value of the Entity pointed on by this Link
+         */
+        unsigned long long get_instance(const Table& table) const;
+
+        /*!
+         * \brief A method to set the instance of the Entity pointed on by this Link.
+         * \param table the table the instance of the Entity pointed on by this Link is stored in
+         * \param new_inst the new instance to be set
+         * \param index the index of the element to be set in case the Link points to and Array-type
+         */
+        void set_instance(Table& table, unsigned long long new_inst, size_t index = 0);
+
+        /*!
+         * \brief A method to get a pointer to the core Entity this Link points to.
+         * \return The pointer to the core Entity this Link points to
+         * \sa Entity, create_link(std::string t_name)
+         */
         Entity* get_core_entity() const;
+
+        //! \brief a trivial destructor.
         ~Link() override = default;
     };
 
@@ -535,20 +633,74 @@ namespace manager{
 
     class Array : public Entity{
     public:
+
+        //! \brief The default constructor of an Array. Usually not used directly.
         Array() = default;
+
+        //! \brief A copying constructor of an Array.
         Array(const Array&) = default;
+
+        //! \brief A moving constructor of an Array.
         Array(Array&&) noexcept;
 
-        std::ostream& show(const Table&, std::ostream&) const override;
+        /*!
+         * \brief A method which shows all the information about this Array.
+         * \param table the table which this Array is stored in
+         * \param os the output stream to print the information to
+         * \sa Entity
+         */
+        std::ostream& show(const Table& table, std::ostream& os) const override;
+
+        /*!
+        * \brief A method which creates a clone of this Array.
+        * \return A newly created object
+        * \sa Entity
+        */
         Entity* clone() const override;
-        Entity* create_link(std::string) const override;
+
+        /*!
+         * \brief A method which creates a Link to this Array.
+         * \param t_name the name of the new Array
+         * \return A newly created Link
+         * \sa Entity
+         */
+        Entity* create_link(std::string t_name) const override;
+
+        /*!
+         * \brief A dialogue method which runs the Array dialogue.
+         * \sa Entity
+         */
         std::ostream& run(Table&, std::ostream&) override;
 
-        unsigned long long get_single_instance(const Table&, size_t t_begin) const noexcept(false);
-        void set_single_instance(Table&, size_t where, unsigned long long what) noexcept(false);
-        std::vector<unsigned long long> operator ()(const Table&,
+        /*!
+         * \brief A method which returns a single Array instance.
+         * \param table the table this Array stores the data in
+         * \param t_begin the address the needed element of the Array starts at
+         * \return  the instance of a certain element
+         * \sa Entity
+         */
+        unsigned long long get_single_instance(const Table& table, size_t t_begin) const noexcept(false);
+
+        /*!
+        * \brief A method to set the instance of this Array.
+        * \param table the table this Value is stored in
+         *\param where the location of the element of the Array to be set
+        * \param what the new instance to be set
+        */
+        void set_single_instance(Table& table, size_t where, unsigned long long what) noexcept(false);
+
+        /*!
+        * \brief The operator which allowing to get multiple instances of the Array in the given range.
+        * \param table the table this Value is stored in
+        * \param t_begin the starter address of the range
+        * \param t_end the the end address of the range
+        * \sa Entity
+        */
+        std::vector<unsigned long long> operator ()(const Table& table,
                 size_t t_begin,
-                size_t t_end) noexcept(false);  //todo
+                size_t t_end) noexcept(false);
+
+        //! \brief A trivial destructor of the Array descriptor.
         ~Array() override = default;
     };
 
@@ -556,21 +708,68 @@ namespace manager{
 
     class DivSeg : public Array{
     protected:
-        std::vector<Program*> programs;
+        std::vector<Program*> programs;    ///< The programs which have access to this Dividable Segment
     public:
+
+        //! \brief The default trivial constructor of a Dividable Segment. Usually not used directly.
         DivSeg() = default;
+
+        //! \brief A copying constructor of a Dividable Segment.
         DivSeg(const DivSeg&);
+
+        //! \brief a moving constructor of a Dividable Segment.
         DivSeg(DivSeg&&) noexcept;
 
+
+        /*!
+         * \brief A method which shows all the information about this Dividable Segment.
+         * \param table the table which this Dividable Segment is stored in
+         * \param os the output stream to print the information to
+         * \sa Entity
+         */
         std::ostream& show(const Table&, std::ostream&) const override;
+
+        /*!
+        * \brief A method which creates a clone of this Dividable Segment.
+        * \return A newly created object
+        * \sa Entity
+        */
         Entity* clone() const override;
+
+        /*!
+         * \brief A method which creates a Link to this Dividable Segment.
+         * \param t_name the name of the new Dividable Segment
+         * \return A newly created Link
+         * \sa Entity
+         */
         Entity* create_link(std::string) const override;
+
+        /*!
+        * \brief A dialogue method which runs the Dividable Segment dialogue.
+        * \sa Entity
+        */
         std::ostream& run(Table&, std::ostream&) override;
 
-        std::ostream& show_programs (std::ostream&) const;
-        void add_program(Program*);
-        void erase_program(Program*);
 
+        /*!
+        * \brief A method which briefly shows the information about the Programs this DivSeg is stored in.
+        * \sa Program
+        */
+        std::ostream& show_programs (std::ostream&) const;
+
+        /*!
+        * \brief A dialogue method which adds a certain program to this Segment's program list.
+        * \sa Program
+        */
+        void add_program(Program* pr);
+
+        /*!
+        * \brief A dialogue method which erases a certain program from this Segment's program list.
+        * \sa Program
+        */
+        void erase_program(Program* pr);
+
+        //! \brief The destructor of the Dividable Segment.
         ~DivSeg() override;
     };
 
