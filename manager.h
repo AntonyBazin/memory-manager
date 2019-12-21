@@ -54,7 +54,7 @@ namespace manager{
     class App;
 
     /*!
-     * \brief This class describes and Entity.
+     * \brief This abstract class describes and Entity.
      *
      * The Entity class is the abstract class used to work with
      * Entities. It is a Base class for the descriptors of
@@ -128,7 +128,7 @@ namespace manager{
 
 
     /*!
-     * \brief This class describes the position of a memory block.
+     * \brief This structure describes the position of a memory block.
      *
      * It is used by the Table class to store the free blocks
      * and the Entities descriptors to mark the memory
@@ -147,44 +147,128 @@ namespace manager{
 
     class Entity{
     protected:
-        Entity_ID e_id;
-        std::string name;
-        Unit position;
-        size_t refs;
-        size_t single_size;
+        Entity_ID e_id;    ///< This field describes the Entity's ID
+        std::string name;  ///< This field describes the Entity's name
+        Unit position;     ///< This field describes the Entity's data position in the table
+        size_t refs;       ///< This field tells the amount of usages of the Entity in the programs
+        size_t single_size;///< This field describes the Entity's size(for Value) or the size of 1 element
     public:
+        //! A trivial constructor
         Entity() : position({}),
                    e_id(E_ERR),
                    name({}),
                    refs(0),
                    single_size(0) {}
+        //! Copying constructor
         Entity(const Entity&);
+        //! moving constructor
         Entity(Entity&&) noexcept;
 
+        /*!
+         * \brief A pure virtual clone method.
+         * \return A clone of this class object
+         * \sa create_link(std::string), show(const Table&, std::ostream&), and run(Table&, std::ostream&)
+         */
         virtual Entity* clone() const = 0;
+
+        /*!
+         * \brief A pure virtual method for creating links.
+         * \return A link to this Entity
+         * \sa clone(), show(const Table&, std::ostream&), and run(Table&, std::ostream&)
+         */
         virtual Entity* create_link(std::string) const = 0;
+
+        /*!
+         * \brief A pure virtual show method.
+         * \sa create_link(std::string), clone(), and run(Table&, std::ostream&)
+         */
         virtual std::ostream& show(const Table&, std::ostream&) const = 0;
+
+        /*!
+         * \brief A pure virtual run method.
+         * The method is used to interact with the user
+         * \sa create_link(std::string), show(const Table&, std::ostream&), and clone()
+         */
         virtual std::ostream& run(Table&, std::ostream&) = 0;
 
+        /*!
+         * \brief A method to set the Entity's ID.
+         * \sa e_id
+         */
         void set_id(Entity_ID id) noexcept { e_id = id; }
+
+        /*!
+         * \brief A method to set the Entity's data position.
+         * \sa position
+         */
         void set_pos(Unit un) noexcept { position = un; }
+
+        /*!
+         * \brief A method to set the Entity's name.
+         */
         void set_name(const std::string& t_name) noexcept { name = t_name; }
+
+        /*!
+         * \brief A method to set the Entity's single_size.
+         * \sa single_size
+         */
         void set_single_size(size_t sz) { single_size = sz; }
 
+        /*!
+         * \brief A method to get the Entity's position.
+         */
         Unit get_pos() const noexcept { return position; }
+
+        /*!
+         * \brief A method to get the Entity's single_size.
+         * \sa single_size
+         */
         size_t get_single_size() const noexcept { return single_size; }
+
+        /*!
+         * \brief A method to get the Entity's size in the memory.
+         * \sa Unit
+         */
         size_t get_size() const noexcept { return  position.size; }
+
+        /*!
+         * \brief A method to get the Entity's ID.
+         */
         Entity_ID get_entity_id() const noexcept { return e_id; }
+
+        /*!
+         * \brief A method to get the Entity's name.
+         */
         std::string get_name() const noexcept { return name; }
+
+        /*!
+         * \brief A method to get the Entity's refs count.
+         */
         size_t get_refs_count() const noexcept { return refs; }
 
+
+        /*!
+         * \brief A method to increment the references counter for the Entity.
+         * \sa refs
+         */
         void increment_refs() noexcept { ++refs; }
+        /*!
+         * \brief A method to decrement the references counter for the Entity.
+         * \sa refs
+         */
         void decrement_refs() noexcept { --refs; }
 
+        /*!
+         * \brief A static fabric method to create Entities.
+         * \param e_id the ID of the Entity
+         * \param single_size the size of 1 element(for arrays) or of the value(for single values)
+         * \param t_name The name to be iven to the Entity
+         */
         static Entity* generate_Entity(Entity_ID e_id,
                 size_t single_size,
                 const std::string& t_name = "def") noexcept(false);
 
+        //! \brief Just a virtual default destructor.
         virtual ~Entity() = default;
     };
 
@@ -192,21 +276,57 @@ namespace manager{
 
     class Table{
     private:
-        static const int max_size = 500;
-        std::vector<unsigned char> memory;
-        std::vector<Unit> free_blocks;
+        static const int max_size = 500;    ///< This field describes the Table's memory maximum size
+        std::vector<unsigned char> memory;  ///< This vector contains the actual memory of the system
+        std::vector<Unit> free_blocks;      ///< This vector contains descriptions of free blocks in memory
     public:
+        //! A trivial constructor
         Table();
-        void defragmentation();   // obvious
-        void mark_free(size_t t_strt, size_t t_size) noexcept(false);   // for programs to return memory to heap
+
+        /*!
+         * \brief A method to defragment the system's memory in case of memory shortage.
+         * \sa free_blocks
+         */
+        void defragmentation();
+
+        /*!
+         * \brief A method to mark a block of memory as free and available for allocation.
+         * \param t_strt the starter address of memory to free
+         * \param t_size the size of memory to free
+         * \sa free_blocks
+         */
+        void mark_free(size_t t_strt, size_t t_size) noexcept(false);
+
+        /*!
+         * \brief A method to allocate memory from the table.
+         * \param t_size the requested size
+         * \return a Unit describing the allocated memory position
+         * \sa Entity, Unit
+         */
         Unit allocate_memory(size_t t_size);
 
+        /*!
+         * \brief A method to read bytes from the table.
+         * \param t_strt the address to begin reading at
+         * \param t_size the size to read
+         * \return a vector of bytes read from the table
+         * \sa memory, Entity
+         */
         std::vector<unsigned char> read_bytes(size_t t_strt,
                 size_t t_size) const noexcept(false);
 
+        /*!
+         * \brief A method to write something to the system's memory.
+         * \param t_strt the address to start writing to
+         * \param t_size the size of the block to writa to
+         * \param t_vec a vector of bytes to write to the memory
+         * \sa memory, Entity
+         */
         void write(size_t t_strt,
                 size_t t_size,
                 std::vector<unsigned char>t_vec) noexcept(false);
+
+        //! \brief A trivial destructor
         ~Table() = default;
     };
 
@@ -214,45 +334,130 @@ namespace manager{
 
     class Program{
     private:
-        std::vector<Entity*> entities; // the entities the program can operate with
-        std::string file_address;    // file address
-        const size_t memory_quota;   // max amount of memory available to this program
-        Table* table;  // a program has no meaning w/o a table to store data in
-        static const int menus;  // menus amount
-        static std::string menu[];  // menus
+        std::vector<Entity*> entities;   ///< the entities the program can operate with
+        std::string file_address;        ///< file address string
+        const size_t memory_quota;       ///< max amount of memory available to this program
+        Table* table;                    ///< a program has no meaning w/o a table to store data in
+        static const int menus;          ///< menus amount
+        static std::string menu[];       ///< menus
 
-        size_t memory_used() const;   // calculate memory usage
+        /*!
+         * \brief A method to calculate the total amount of memory used by this Program.
+         * \return the total memory size in bytes used by all Entities in this Program
+         * \sa Entity, entities, Table
+         */
+        size_t memory_used() const;
 
+        /*!
+         * \brief A method to request the memory from the Table.
+         * \param t_amount the amount of blocks needed
+         * \param single_val the size of one block
+         * \param e_id the id of the Entity to be created
+         * \param t_name the name of the Entity to be created
+         * \return a pointer to the created Entity object
+         * \sa Entity, Table, Value, Array, DivSeg
+         */
         Entity* request_memory(size_t t_amount,
                 size_t single_val,
                 Entity_ID e_id,
                 const std::string& t_name) noexcept(false);
-        void add_entity(Entity*) noexcept(false);
+
+        /*!
+         * \brief A method to add an Entity to the Program.
+         * \param ent the Entity to be added
+         * \sa Entity, Value, Array, Link, DivSeg
+         */
+        void add_entity(Entity* ent) noexcept(false);
+
+        /*!
+         * \brief A method to free an Entity.
+         * \param t_index the index of the Entity to be freed
+         * \note Support the DivSeg and references counter logic
+         * \sa Entity, DivSeg
+         */
         void free_entity(size_t t_index) noexcept(false);
-        void check_links(Unit);
+
+        /*!
+         * \brief A method to check the Entities for invalid Links.
+         * \param guard the position of the value to check the Links for
+         * \sa Entity, Unit
+         */
+        void check_links(Unit guard);
+
+        //! \brief A method to free all memory used by this Program.
         void free_all_memory() noexcept;
 
+        /*!
+         * \brief A method to show all info about all Entities of the Program.
+         * \sa Entity
+         */
         std::ostream& show_all(std::ostream&) const noexcept;
 
+        //! \brief A dialogue method to create an Entity.
         int d_create_entity();
+
+        //! \brief A dialogue method to free an Entity.
         int d_free_memory();
+
+        //! \brief A dialogue method to interact with an Entity.
         int d_use_entity();
+
+        //! \brief A dialogue method to show all memory usage details.
         int d_show_all();
+
+        //! \brief A dialogue method to show Dividable Segments available.
         int d_show_divsegs();
+
+        //! \brief A dialogue method to print menus and ask what to do.
         int answer(int menus_count, std::string variants[]);
-        int (Program::*fptr[6])();
+
+        int (Program::*fptr[6])();  ///< a function pointer to dialogue methods
 
     public:
+
+        //! \brief The default constructor of the Program has no meaning in this scope.
         Program() = delete;
+
+        /*!
+         * \brief A basic constructor of the class.
+         * \param table the Table this Program uses
+         * \param t_mem the memory quota available for this Program
+         * \param t_addr the name of the source file of the Program
+         * \sa Table
+         */
         explicit Program(Table* table, size_t t_mem, std::string t_addr);
+
+        //! A copying '=' operator
         Program& operator =(const Program&);
+
+        //! A moving '=' operator
         Program& operator =(Program&&) noexcept;
+
+        //! A '==' operator used to compare Program's equality
         bool operator ==(const Program&);
+
+        /*!
+         * \brief A method to get all Dividable Segments available.
+         * \return A vector of the added DivSegs
+         * \sa Entity, DivSeg
+         */
         std::vector<Entity*> get_div_segs() noexcept;
-        void add_existing_DivSeg(Entity*) noexcept(false); //includes add_program
+
+        /*!
+         * \brief A method to add existing DivSegs to this Program.
+         * \param ent the pointer to the DivSeg to be added
+         * \sa Entity, DivSeg
+         */
+        void add_existing_DivSeg(Entity* ent) noexcept(false);
+
+        //! \brief A dialogue method to run the Program.
         int run();
+
+        //! \brief A method to return the file address of this Program.
         std::string get_address() const noexcept { return file_address; }
+        //! \brief A copying constructor .
         Program(const Program&);
+        //! \brief The destructor of the Program.
         ~Program();
     };
 
