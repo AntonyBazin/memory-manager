@@ -13,110 +13,25 @@ classes used in the application
 #define MEMORY_MANAGER_MANAGER_H
 
 #include <algorithm>
-#include <utility>  // for std::move to move objects such as string's, and for std::exception
+#include <utility>
 #include <vector>
 #include <string>
 #include <stdexcept>
-#include <cmath>  // for std::pow
+#include <cmath>
 #include <iostream>
 
 
 
 namespace manager{
 
-    /*!
-     * \brief This class is used for storing the information
-     * and accessing it.
-     *
-     * Allows programs to allocate memory, write to it, read it,
-     * mark it as free. It also has a special defragmentation function
-     * for clearing the borders of deallocated memory parts.
-     */
+
     class Table;
-
-    /*!
-     * \brief This class describes a program.
-     *
-     * The Program class is used to store the Entities descriptions.
-     * It allows the user to request the table to allocate memory
-     * for Entities, get information about them,
-     * work with the existing Entities that this Program has access to,
-     * and refuse the Entities by deallocating the memory.
-     */
     class Program;
-
-    /*!
-     * \brief This class is used to contain and give access to Programs.
-     *
-     * The App class is used to store the Program class objects
-     * and provides dialogue methods to work with them.
-     */
     class App;
-
-    /*!
-     * \brief This abstract class describes and Entity.
-     *
-     * The Entity class is the abstract class used to work with
-     * Entities. It is a Base class for the descriptors of
-     * Value, Array, Link, Dividable Segment. It contains the basic
-     * fields and methods(including virtual) used by all these Entities.
-     */
     class Entity;
-
-    /*!
-     * \brief This class describes a single Value.
-     *
-     * The Value class is a class derived from the Entity class.
-     * It contains the methods for setting the value,
-     * reading it from the table and converting it into
-     * human-readable numbers.
-     */
     class Value;
-
-    /*!
-     * \brief This class describes an array of values.
-     *
-     * The Array class is a class derived from the Entity class.
-     * It contains the methods for setting the values of array
-     * elements, reading them from the table(all at one or in
-     * an index range) and converting them into
-     * human-readable numbers.
-     * \warning This array can only be used inside the program it
-     * was created in.
-     */
     class Array;
-
-    /*!
-     * \brief This class describes a single Link.
-     *
-     * The Link class is a class derived from the Entity class.
-     * It points to some other class, such as Value, Array or
-     * Dividable Segment. The user gains access to these Entities
-     * through this class.
-     * \note This Link can only be used in the program it
-     * was created in.
-     * \note Since the Link can only point to another Entity,
-     * it cannot exist alone, by itself.
-     * \warning When the Entity which a Link refers to is deallocated,
-     * a message about this incorrect Link will appear,
-     * and the Link will be destroyed as well.
-     */
     class Link;
-
-    /*!
-     * \brief This class describes a Dividable Segment.
-     *
-     * The Dividable Segment class is a class derived from the Entity class.
-     * It contains the methods for setting the values of array
-     * elements, reading them from the table(all at one or in
-     * an index range) and converting them into
-     * human-readable numbers. This type of Array can be used
-     * in multiple Programs.
-     * \note If this Entity is divided between two or
-     * more Programs at the same time, and one of them
-     * is ordered to free this Segment, it will only stop working with
-     * it, the Entity itself will not be destroyed.
-     */
     class DivSeg;
 
     /// The keys used to identify the Entities
@@ -124,7 +39,7 @@ namespace manager{
             Array_ID,              ///< Defines the Entity as an Array
             DivSeg_ID,             ///< Defines the Entity as a Dividable Segment
             Link_ID,               ///< Defines the Entity as a Link
-            E_ERR };               ///< Used in undefined Entites. Will never appear normally.
+            E_ERR };               ///< Used in undefined Entities. Will never appear normally.
 
 
     /*!
@@ -135,16 +50,27 @@ namespace manager{
      * available for them.
      */
     struct Unit{
-        size_t starter_address;      ///> The start address of the block
-        size_t size;                 ///> The size of the block
+        size_t starter_address;      ///< The start address of the block
+        size_t size;                 ///< The size of the block
 
+        //! \brief The Unit constructor initializing the starter_address and size fields
         Unit(size_t t_strt, size_t t_size) : starter_address(t_strt), size(t_size){};
+
+        //! \brief The default Unit constructor
         Unit() : starter_address(0), size(0) {};
         bool operator==(const Unit&) const;
     };
 
 
 
+    /*!
+     * \brief This abstract class describes an Entity.
+     *
+     * The Entity class is the abstract class used to work with
+     * Entities. It is a Base class for the descriptors of
+     * Value, Array, Link, Dividable Segment. It contains the basic
+     * fields and methods(including virtual) used by all these Entities.
+     */
     class Entity{
     protected:
         Entity_ID e_id;    ///< This field describes the Entity's ID
@@ -274,6 +200,14 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class is used for storing the information
+     * and accessing it.
+     *
+     * Allows programs to allocate memory, write to it, read it,
+     * mark it as free. It also has a special defragmentation function
+     * for clearing the borders of deallocated memory parts.
+     */
     class Table{
     private:
         static const int max_size = 500;    ///< This field describes the Table's memory maximum size
@@ -318,7 +252,7 @@ namespace manager{
         /*!
          * \brief A method to write something to the system's memory.
          * \param t_strt the address to start writing to
-         * \param t_size the size of the block to writa to
+         * \param t_size the size of the block to write to
          * \param t_vec a vector of bytes to write to the memory
          * \sa memory, Entity
          */
@@ -332,6 +266,15 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class describes a program.
+     *
+     * The Program class is used to store the Entities descriptions.
+     * It allows the user to request the table to allocate memory
+     * for Entities, get information about them,
+     * work with the existing Entities that this Program has access to,
+     * and refuse the Entities by deallocating the memory.
+     */
     class Program{
     private:
         std::vector<Entity*> entities;   ///< the entities the program can operate with
@@ -438,13 +381,13 @@ namespace manager{
 
         /*!
          * \brief A method to get all Dividable Segments available.
-         * \return A vector of the added DivSegs
+         * \return A vector of the added Dividable Segments
          * \sa Entity, DivSeg
          */
         std::vector<Entity*> get_div_segs() noexcept;
 
         /*!
-         * \brief A method to add existing DivSegs to this Program.
+         * \brief A method to add existing Dividable Segments to this Program.
          * \param ent the pointer to the DivSeg to be added
          * \sa Entity, DivSeg
          */
@@ -463,6 +406,12 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class is used to contain and give access to Programs.
+     *
+     * The App class is used to store the Program class objects
+     * and provides dialogue methods to work with them.
+     */
     class App{
     private:
         Table* table;                    ///< A pointer to a table objects existing in this App
@@ -493,6 +442,14 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class describes a single Value.
+     *
+     * The Value class is a class derived from the Entity class.
+     * It contains the methods for setting the value,
+     * reading it from the table and converting it into
+     * human-readable numbers.
+     */
     class Value : public Entity{
     public:
 
@@ -555,9 +512,24 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class describes a single Link.
+     *
+     * The Link class is a class derived from the Entity class.
+     * It points to some other class, such as Value, Array or
+     * Dividable Segment. The user gains access to these Entities
+     * through this class.
+     * \note This Link can only be used in the program it
+     * was created in.
+     * \note Since the Link can only point to another Entity,
+     * it cannot exist alone, by itself.
+     * \warning When the Entity which a Link refers to is deallocated,
+     * a message about this incorrect Link will appear,
+     * and the Link will be destroyed as well.
+     */
     class Link : public Entity{
     private:
-        Entity* ptr;      ///> the pointer to the Entity this Link points to
+        Entity* ptr;      ///< the pointer to the Entity this Link points to
     public:
 
         //! \brief A default Link costructor. Usually not used directly.
@@ -631,6 +603,17 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class describes an array of values.
+     *
+     * The Array class is a class derived from the Entity class.
+     * It contains the methods for setting the values of array
+     * elements, reading them from the table(all at one or in
+     * an index range) and converting them into
+     * human-readable numbers.
+     * \warning This array can only be used inside the program it
+     * was created in.
+     */
     class Array : public Entity{
     public:
 
@@ -706,6 +689,20 @@ namespace manager{
 
 
 
+    /*!
+     * \brief This class describes a Dividable Segment.
+     *
+     * The Dividable Segment class is a class derived from the Entity class.
+     * It contains the methods for setting the values of array
+     * elements, reading them from the table(all at one or in
+     * an index range) and converting them into
+     * human-readable numbers. This type of Array can be used
+     * in multiple Programs.
+     * \note If this Entity is divided between two or
+     * more Programs at the same time, and one of them
+     * is ordered to free this Segment, it will only stop working with
+     * it, the Entity itself will not be destroyed.
+     */
     class DivSeg : public Array{
     protected:
         std::vector<Program*> programs;    ///< The programs which have access to this Dividable Segment
