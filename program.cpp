@@ -165,9 +165,9 @@ namespace manager{
 
 
 
-    vector<Entity*> Program::get_div_segs() noexcept {
+    std::vector<Entity*> Program::get_div_segs() noexcept {
         auto iter = entities.begin();
-        vector<Entity*> res = {};
+        std::vector<Entity*> res = {};
         for(; iter != entities.end(); ++iter){
             if((*iter)->get_entity_id() == DivSeg_ID){
                 res.push_back((*iter));
