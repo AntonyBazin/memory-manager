@@ -402,5 +402,9 @@ namespace manager{
         }
     }
 
+    const Entity* Program::get_entity(size_t index) const noexcept(false) {
+        return (entities.at(index));
+    }
+
 
 }

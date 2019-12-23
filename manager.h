@@ -298,35 +298,6 @@ namespace manager{
         size_t memory_used() const;
 
         /*!
-         * \brief A method to request the memory from the Table.
-         * \param t_amount the amount of blocks needed
-         * \param single_val the size of one block
-         * \param e_id the id of the Entity to be created
-         * \param t_name the name of the Entity to be created
-         * \return a pointer to the created Entity object
-         * \sa Entity, Table, Value, Array, DivSeg
-         */
-        Entity* request_memory(size_t t_amount,
-                size_t single_val,
-                Entity_ID e_id,
-                const std::string& t_name) noexcept(false);
-
-        /*!
-         * \brief A method to add an Entity to the Program.
-         * \param ent the Entity to be added
-         * \sa Entity, Value, Array, Link, DivSeg
-         */
-        void add_entity(Entity* ent) noexcept(false);
-
-        /*!
-         * \brief A method to free an Entity.
-         * \param t_index the index of the Entity to be freed
-         * \note Support the DivSeg and references counter logic
-         * \sa Entity, DivSeg
-         */
-        void free_entity(size_t t_index) noexcept(false);
-
-        /*!
          * \brief A method to check the Entities for invalid Links.
          * \param guard the position of the value to check the Links for
          * \sa Entity, Unit
@@ -376,14 +347,46 @@ namespace manager{
          */
         explicit Program(Table* table, size_t t_mem, std::string t_addr);
 
-        //! A copying '=' operator
+        //! \brief A copying '=' operator
         Program& operator =(const Program&);
 
-        //! A moving '=' operator
+        //! \brief A moving '=' operator
         Program& operator =(Program&&) noexcept;
 
-        //! A '==' operator used to compare Program's equality
+        //! \brief A '==' operator used to compare Program's equality
         bool operator ==(const Program&);
+
+        /*!
+         * \brief A method to request the memory from the Table.
+         * \param t_amount the amount of blocks needed
+         * \param single_val the size of one block
+         * \param e_id the id of the Entity to be created
+         * \param t_name the name of the Entity to be created
+         * \return a pointer to the created Entity object
+         * \sa Entity, Table, Value, Array, DivSeg
+         */
+        Entity* request_memory(size_t t_amount,
+                               size_t single_val,
+                               Entity_ID e_id,
+                               const std::string& t_name) noexcept(false);
+
+        //! \brief a method to get an Entity at the given index
+        const Entity* get_entity(size_t index) const noexcept(false);
+
+        /*!
+         * \brief A method to add an Entity to the Program.
+         * \param ent the Entity to be added
+         * \sa Entity, Value, Array, Link, DivSeg
+         */
+        void add_entity(Entity* ent) noexcept(false);
+
+        /*!
+         * \brief A method to free an Entity.
+         * \param t_index the index of the Entity to be freed
+         * \note Support the DivSeg and references counter logic
+         * \sa Entity, DivSeg
+         */
+        void free_entity(size_t t_index) noexcept(false);
 
         /*!
          * \brief A method to get all Dividable Segments available.

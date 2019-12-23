@@ -18,6 +18,9 @@ namespace manager{
 
 
     void Table::defragmentation() {
+        std::unique_lock<std::mutex> lock(mtx);
+        not_empty.wait(lock, [this](){return !free_blocks.empty(); });
+
         std::vector<Unit>::iterator vec_it;  // a cycle is used for full defragmentation
         for(vec_it = free_blocks.begin() + 1; vec_it != free_blocks.end(); ++vec_it){
             if(vec_it->starter_address == (vec_it - 1)->starter_address + (vec_it - 1)->size + 1){
@@ -32,6 +35,9 @@ namespace manager{
 
 
     void Table::mark_free(size_t t_strt, size_t t_size) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        not_empty.wait(lock, [this](){return !free_blocks.empty(); });
+
         if(t_strt < 0)
             throw std::out_of_range("starter address below zero");
         if(t_strt > max_size)
@@ -53,11 +59,22 @@ namespace manager{
                                  [t_strt](Unit un) -> bool { return un.starter_address > t_strt; });
         Unit newcomer(t_strt, t_size);
         free_blocks.insert(mark, newcomer);
+
+        not_full.notify_one();
     }
 
 
 
     Unit Table::allocate_memory(size_t t_size) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        not_full.wait(lock, [this](){
+            size_t counter = 0;
+            for(auto & free_block : free_blocks){
+                counter += free_block.size;
+            }
+            return counter < max_size - 1; });
+
+
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_size](Unit un) -> bool { return un.size >= t_size; });
@@ -80,6 +97,8 @@ namespace manager{
         }
 
         Unit pos(strt, t_size);
+        not_empty.notify_one();
+
         return pos;
     }
 
