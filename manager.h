@@ -19,6 +19,9 @@ classes used in the application
 #include <stdexcept>
 #include <cmath>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 
 
@@ -213,6 +216,9 @@ namespace manager{
         static const int max_size = 500;    ///< This field describes the Table's memory maximum size
         std::vector<unsigned char> memory;  ///< This vector contains the actual memory of the system
         std::vector<Unit> free_blocks;      ///< This vector contains descriptions of free blocks in memory
+        std::mutex mtx;                     ///< The mutex object protecting from multitasking errors
+        std::condition_variable not_full;   ///< A condition variable signalizing the table can be written to
+        std::condition_variable not_empty;  ///< A condition variable signalizing the table contains some information
     public:
         //! A trivial constructor
         Table();
