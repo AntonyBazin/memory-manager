@@ -68,6 +68,9 @@ namespace manager{
 
 
     void Program::add_entity(Entity* ent) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        writable.wait(lock, [this](){ return entities.size() < 10; });
+
         if(std::find(entities.begin(), entities.end(), ent) != entities.end())
             throw std::invalid_argument("Entity already exists in this program!");
 
@@ -77,11 +80,15 @@ namespace manager{
             auto d_ptr = dynamic_cast<DivSeg*>(ent);
             d_ptr->add_program(this);
         }
+        readable.notify_one();
     }
 
 
 
     void Program::free_entity(size_t t_index) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        readable.wait(lock, [this](){return !entities.empty(); });
+
         Unit pos = entities.at(t_index)->get_pos();
         auto mark = entities.begin() + t_index;
         (*mark)->decrement_refs();
@@ -95,6 +102,7 @@ namespace manager{
         }
         entities.erase(mark); // delete from this programs entities anyway
         check_links(pos);
+        writable.notify_one();
     }
 
 

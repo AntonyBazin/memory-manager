@@ -216,9 +216,6 @@ namespace manager{
         static const int max_size = 500;    ///< This field describes the Table's memory maximum size
         std::vector<unsigned char> memory;  ///< This vector contains the actual memory of the system
         std::vector<Unit> free_blocks;      ///< This vector contains descriptions of free blocks in memory
-        std::mutex mtx;                     ///< The mutex object protecting from multitasking errors
-        std::condition_variable not_full;   ///< A condition variable signalizing the table can be written to
-        std::condition_variable not_empty;  ///< A condition variable signalizing the table contains some information
     public:
         //! A trivial constructor
         Table();
@@ -289,6 +286,9 @@ namespace manager{
         Table* table;                    ///< a program has no meaning w/o a table to store data in
         static const int menus;          ///< menus amount
         static std::string menu[];       ///< menus
+        std::mutex mtx;                     ///< The mutex object protecting from multitasking errors
+        std::condition_variable readable;   ///< A condition variable signalizing the program can be written to
+        std::condition_variable writable;  ///< A condition variable signalizing the program can be read from
 
         /*!
          * \brief A method to calculate the total amount of memory used by this Program.

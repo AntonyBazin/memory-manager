@@ -5,7 +5,7 @@
 using namespace manager;
 
 void create_values(Table& table, Program& program){
-    for(unsigned long long i = 0; i < 10; ++i){
+    for(unsigned long long i = 0; i < 21; ++i){
         Value* val = dynamic_cast<Value*>(program.request_memory(1, 8, Value_ID, "test"));
         program.add_entity(val);
         val->set_instance(std::ref(table), i);
