@@ -287,8 +287,8 @@ namespace manager{
         static const int menus;          ///< menus amount
         static std::string menu[];       ///< menus
         std::mutex mtx;                     ///< The mutex object protecting from multitasking errors
-        std::condition_variable readable;   ///< A condition variable signalizing the program can be written to
-        std::condition_variable writable;  ///< A condition variable signalizing the program can be read from
+        std::condition_variable not_empty;   ///< A condition variable signalizing the program can be written to
+        std::condition_variable not_full;  ///< A condition variable signalizing the program can be read from
 
         /*!
          * \brief A method to calculate the total amount of memory used by this Program.

@@ -33,8 +33,7 @@ int main() {
     Program program(&table, 400, "testfile");
     std::thread placer(create_values, std::ref(table), std::ref(program));
     std::thread reader(destroy_values, std::ref(table), std::ref(program));
-
-    placer.join();
     reader.join();
+    placer.join();
     return 0;
 }
