@@ -69,7 +69,7 @@ namespace manager{
 
     void Program::add_entity(Entity* ent) noexcept(false) {
         std::unique_lock<std::mutex> lock(mtx);
-        not_full.wait(lock, [this](){ return entities.size() < 10; });
+        not_full.wait(lock, [this](){ return entities.size() < 100; });
 
         if(std::find(entities.begin(), entities.end(), ent) != entities.end())
             throw std::invalid_argument("Entity already exists in this program!");
