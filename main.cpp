@@ -1,4 +1,3 @@
-#include <functional>
 #include "manager.h"
 
 
@@ -8,7 +7,7 @@ using namespace manager;
 void increment_values(Table& table, DivSeg* ds){
     for(size_t i = 0; i < 10; ++i){
         ds->set_single_instance(std::ref(table), 0, i);
-        std::cout << "              From zero: " << ds->get_single_instance(table, 0) << std::endl;
+        std::cout << "From zero: " << ds->get_single_instance(table, 0) << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
@@ -16,7 +15,7 @@ void increment_values(Table& table, DivSeg* ds){
 void replace_values(Table& table, DivSeg* ds){
     for(size_t x = 0; x < 15; ++x){
         ds->set_single_instance(std::ref(table), 0, x + 100);
-        std::cout << "           From hundred: " << x + 100 << std::endl;
+        std::cout << "From hundred: " << x + 100 << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
@@ -32,7 +31,7 @@ void create_values(Table& table, Program& program){
 }
 
 
-int main() {
+int main(){
     Table table;
     Program program1(&table, 50, "testfile1");
     Program program2(&table, 50, "testfile2");
@@ -45,7 +44,7 @@ int main() {
 
     increment.join();
     decrement.join();
-
     placer.join();
+
     return 0;
 }

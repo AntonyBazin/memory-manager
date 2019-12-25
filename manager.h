@@ -19,6 +19,7 @@ classes used in the application
 #include <stdexcept>
 #include <cmath>
 #include <iostream>
+#include <functional>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
