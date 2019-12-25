@@ -102,6 +102,7 @@ namespace manager{
         }
         entities.erase(mark); // delete from this programs entities anyway
         check_links(pos);
+
         not_full.notify_one();
     }
 

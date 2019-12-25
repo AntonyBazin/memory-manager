@@ -32,6 +32,15 @@ namespace manager{
 
 
     void Table::mark_free(size_t t_strt, size_t t_size) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        /*not_empty.wait(lock, [this]() {
+            size_t count = 0;
+            for(auto& block : free_blocks){
+                count += block.size;
+            }
+            return count != max_size;
+        });*/
+
         if(t_strt < 0)
             throw std::out_of_range("starter address below zero");
         if(t_strt > max_size)
@@ -53,11 +62,22 @@ namespace manager{
                                  [t_strt](Unit un) -> bool { return un.starter_address > t_strt; });
         Unit newcomer(t_strt, t_size);
         free_blocks.insert(mark, newcomer);
+
+        //not_full.notify_one();
     }
 
 
 
     Unit Table::allocate_memory(size_t t_size) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        /*not_full.wait(lock, [this](){
+            size_t count = 0;
+            for(auto& block : free_blocks){
+                count += block.size;
+            }
+            return count > 1;
+        });*/
+
         auto mark = std::find_if(free_blocks.begin(),
                                  free_blocks.end(),
                                  [t_size](Unit un) -> bool { return un.size >= t_size; });
@@ -75,11 +95,13 @@ namespace manager{
         if(mark->size == t_size){
             free_blocks.erase(mark);
         } else{
-            mark->starter_address += (t_size + 1);
-            mark->size -= (t_size + 1);
+            mark->starter_address += t_size;
+            mark->size -= (t_size);
         }
 
         Unit pos(strt, t_size);
+
+        //not_empty.notify_one();
         return pos;
     }
 

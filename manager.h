@@ -216,6 +216,9 @@ namespace manager{
         static const int max_size = 500;    ///< This field describes the Table's memory maximum size
         std::vector<unsigned char> memory;  ///< This vector contains the actual memory of the system
         std::vector<Unit> free_blocks;      ///< This vector contains descriptions of free blocks in memory
+        std::mutex mtx;                     ///< The mutex object protecting from multitasking errors
+        std::condition_variable not_empty;  ///< A condition variable signalizing the table can be written to
+        std::condition_variable not_full;   ///< A condition variable signalizing the table can be read from
     public:
         //! A trivial constructor
         Table();
@@ -291,13 +294,6 @@ namespace manager{
         std::condition_variable not_full;  ///< A condition variable signalizing the program can be read from
 
         /*!
-         * \brief A method to calculate the total amount of memory used by this Program.
-         * \return the total memory size in bytes used by all Entities in this Program
-         * \sa Entity, entities, Table
-         */
-        size_t memory_used() const;
-
-        /*!
          * \brief A method to check the Entities for invalid Links.
          * \param guard the position of the value to check the Links for
          * \sa Entity, Unit
@@ -355,6 +351,13 @@ namespace manager{
 
         //! \brief A '==' operator used to compare Program's equality
         bool operator ==(const Program&);
+
+        /*!
+         * \brief A method to calculate the total amount of memory used by this Program.
+         * \return the total memory size in bytes used by all Entities in this Program
+         * \sa Entity, entities, Table
+         */
+        size_t memory_used() const;
 
         /*!
          * \brief A method to request the memory from the Table.
@@ -667,15 +670,15 @@ namespace manager{
         /*!
          * \brief A method which returns a single Array instance.
          * \param table the table this Array stores the data in
-         * \param t_begin the address the needed element of the Array starts at
+         * \param t_index the index of the needed element of the Array
          * \return  the instance of a certain element
          * \sa Entity
          */
-        unsigned long long get_single_instance(const Table& table, size_t t_begin) const noexcept(false);
+        unsigned long long get_single_instance(const Table& table, size_t t_index) const noexcept(false);
 
         /*!
         * \brief A method to set the instance of this Array.
-        * \param table the table this Value is stored in
+        * \param table the table this Array is stored in
          *\param where the location of the element of the Array to be set
         * \param what the new instance to be set
         */
@@ -683,7 +686,7 @@ namespace manager{
 
         /*!
         * \brief The operator which allowing to get multiple instances of the Array in the given range.
-        * \param table the table this Value is stored in
+        * \param table the table this Array is stored in
         * \param t_begin the starter address of the range
         * \param t_end the the end address of the range
         * \sa Entity
@@ -715,6 +718,7 @@ namespace manager{
     class DivSeg : public Array{
     protected:
         std::vector<Program*> programs;    ///< The programs which have access to this Dividable Segment
+        std::mutex mtx;                     ///< The mutex object protecting from multitasking errors
     public:
 
         //! \brief The default trivial constructor of a Dividable Segment. Usually not used directly.
@@ -726,6 +730,22 @@ namespace manager{
         //! \brief a moving constructor of a Dividable Segment.
         DivSeg(DivSeg&&) noexcept;
 
+        /*!
+        * \brief A method which returns a single Dividable Segment instance.
+        * \param table the table this Dividable Segment stores the data in
+        * \param t_index the index of the needed element of the Array
+        * \return  the instance of a certain element
+        * \sa Entity
+        */
+        unsigned long long get_single_instance(const Table& table, size_t t_index) noexcept(false);
+
+        /*!
+        * \brief A method to set the instance of this Dividable Segment.
+        * \param table the table this Dividable Segment is stored in
+         *\param where the location of the element of the Array to be set
+        * \param what the new instance to be set
+        */
+        void set_single_instance(Table& table, size_t where, unsigned long long what) noexcept(false);
 
         /*!
          * \brief A method which shows all the information about this Dividable Segment.

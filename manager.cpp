@@ -292,7 +292,8 @@ namespace manager{
     void Array::set_single_instance(Table& table, size_t where, unsigned long long what) noexcept(false) {
         if(where >= position.size/single_size)
             throw std::runtime_error("There is no such element in the array!");
-        if(what > static_cast<unsigned long long>(std::pow(2, single_size*8)))
+        size_t k = static_cast<unsigned long long>(std::pow(2, single_size*8));
+        if(what > k)
             throw std::runtime_error("The argument is too high to contain!");
 
         size_t size = single_size;
@@ -553,9 +554,28 @@ namespace manager{
         }
     }
 
+
+
+
     DivSeg::~DivSeg() {
         programs.clear();  // intended, this should NEVER destroy the programs it refers to
     }
+
+
+
+    unsigned long long DivSeg::get_single_instance(const Table &table, size_t t_index) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        unsigned long long ans = Array::get_single_instance(table, t_index);
+        return ans;
+    }
+
+
+
+    void DivSeg::set_single_instance(Table &table, size_t where, unsigned long long what) noexcept(false) {
+        std::unique_lock<std::mutex> lock(mtx);
+        Array::set_single_instance(table, where, what);
+    }
+
 
 
     bool Unit::operator==(const Unit& un) const {

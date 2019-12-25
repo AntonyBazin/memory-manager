@@ -4,35 +4,41 @@
 
 using namespace manager;
 
-void create_values(Table& table, Program& program){
-    for(unsigned long long i = 0; i < 21; ++i){
-        Value* val = dynamic_cast<Value*>(program.request_memory(1, 8, Value_ID, "test"));
-        program.add_entity(val);
-        val->set_instance(std::ref(table), i);
-        std::cout << "Placed: " << val->get_instance(table) << std::endl;
+
+void increment_values(Table& table, DivSeg* ds){
+    for(size_t i = 0; i < 25; ++i){
+        ds->set_single_instance(std::ref(table), 0, i);
+        std::cout << "Placed: " << ds->get_single_instance(table, 0) << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
 
-void destroy_values(Table& table, Program& program){
-    while(true){
-        try{
-            const auto val = dynamic_cast<const Value*>(program.get_entity(0));
-            std::cout << "Fetched: " << val->get_instance(table) << std::endl;
-            program.free_entity(0);
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        } catch(std::exception& ex){
-            break;
-        }
+void zeroed_values(Table& table, DivSeg* ds){
+    for(size_t x = 0; x < 20; ++x){
+        ds->set_single_instance(std::ref(table), 0, x + 100);
+        std::cout << "Replaced: " << x + 100 << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+}
+
+
+void create_values(Table& table, Program& pr){
+
+}
+
+void delete_values(Table& table, Program& pr){
+
 }
 
 
 int main() {
     Table table;
-    Program program(&table, 400, "testfile");
-    std::thread placer(create_values, std::ref(table), std::ref(program));
-    std::thread reader(destroy_values, std::ref(table), std::ref(program));
+    Program program1(&table, 250, "testfile1");
+    Program program2(&table, 250, "testfile2");
+    DivSeg* ds = dynamic_cast<DivSeg*>(program1.request_memory(1, 6, DivSeg_ID, "test"));
+    program2.add_entity(ds);
+    std::thread placer(increment_values, std::ref(table), std::ref(ds));
+    std::thread reader(zeroed_values, std::ref(table), std::ref(ds));
     reader.join();
     placer.join();
     return 0;
